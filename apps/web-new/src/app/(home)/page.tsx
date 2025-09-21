@@ -2,17 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { useSession } from 'next-auth/react';
+import { useSafeAuth } from '../../contexts/useSafeAuth';
+
+// Disable SSR for this page
+export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
   const router = useRouter();
-  const { status } = useSession();
+  const { user, loading } = useSafeAuth();
   
-  const isGuest = status === 'unauthenticated';
-  const isAuthenticated = status === 'authenticated';
+  const isGuest = !user;
+  const isAuthenticated = !!user;
 
   // Loading state
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">

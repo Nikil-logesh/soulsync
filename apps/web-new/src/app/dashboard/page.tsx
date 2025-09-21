@@ -1,6 +1,5 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
@@ -14,18 +13,17 @@ import {
   BookOpenIcon,
   PlayIcon
 } from '@heroicons/react/24/outline';
+import { useSafeAuth } from '../../contexts/useSafeAuth';
+
+// Disable static optimization for this page
+export const dynamic = 'force-dynamic';
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const { user, loading } = useSafeAuth();
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/');
-    }
-  }, [status, router]);
-
-  if (status === 'loading') {
+  // Show loading state
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <motion.div 
@@ -37,14 +35,10 @@ export default function DashboardPage() {
     );
   }
 
-  if (!session?.user) {
-    return null;
-  }
-
-  // Extract domain and determine institution
-  const emailDomain = session.user.email?.split('@')[1];
-  let institution = 'Individual';
-  let institutionType = 'personal';
+  // Extract domain and determine institution (for authenticated users)
+  const emailDomain = user?.email?.split('@')[1];
+  let institution = user ? 'Individual' : 'Guest Mode';
+  let institutionType = user ? 'personal' : 'guest';
 
   const domainMap: { [key: string]: string } = {
     'sairamtap.edu.in': 'Sairam Engineering College',
@@ -74,7 +68,7 @@ export default function DashboardPage() {
     return `${adjectives[adjIndex]}${nouns[nounIndex]}${number}`;
   };
 
-  const anonymousName = session.user.email ? generateAnonymousName(session.user.email) : 'AnonymousUser';
+  const anonymousName = user?.email ? generateAnonymousName(user.email) : 'GuestUser123';
 
   return (
     <div className="max-w-6xl mx-auto px-4 relative min-h-screen">

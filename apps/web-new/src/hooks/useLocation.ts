@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useSafeAuth } from "../contexts/useSafeAuth";
 
 interface LocationData {
   country: string;
@@ -29,7 +29,7 @@ interface UseLocationReturn extends LocationState {
 }
 
 export function useLocation(): UseLocationReturn {
-  const { data: session, status } = useSession();
+  const { user, loading } = useSafeAuth();
   
   const [state, setState] = useState<LocationState>({
     location: null,
@@ -39,48 +39,37 @@ export function useLocation(): UseLocationReturn {
     lastUpdated: null
   });
 
-  // Save location to server
+  // Save location to localStorage only (no server API)
   const saveLocation = useCallback(async (location: LocationData) => {
-    if (!session?.user) {
-      setState(prev => ({ ...prev, error: "Authentication required" }));
-      return;
-    }
-
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const response = await fetch('/api/location', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ location }),
-      });
+      // Store directly in localStorage
+      const locationData = {
+        country: location.country,
+        state: location.state,
+        city: location.city,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracy: location.accuracy,
+        lastUpdated: Date.now()
+      };
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to save location');
-      }
+      localStorage.setItem('soulsync_location', JSON.stringify(locationData));
 
       setState(prev => ({
         ...prev,
         location: {
           country: location.country,
           state: location.state,
-          city: location.city
+          city: location.city,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          accuracy: location.accuracy
         },
         isLoading: false,
-        lastUpdated: data.timestamp,
+        lastUpdated: new Date(locationData.lastUpdated).toISOString(),
         hasPermission: true
-      }));
-
-      // Store in localStorage for quick access
-      localStorage.setItem('soulsync_location', JSON.stringify({
-        country: location.country,
-        state: location.state,
-        city: location.city,
-        lastUpdated: data.timestamp
       }));
 
     } catch (error) {
@@ -91,7 +80,7 @@ export function useLocation(): UseLocationReturn {
         error: error instanceof Error ? error.message : 'Failed to save location'
       }));
     }
-  }, [session]);
+  }, [user]);
 
   // Detect location using browser GPS
   const detectLocation = useCallback(async () => {
@@ -158,7 +147,7 @@ export function useLocation(): UseLocationReturn {
       };
 
       // Auto-save if user is logged in
-      if (session?.user) {
+      if (user) {
         await saveLocation(locationData);
       } else {
         // Store temporarily for guest users
@@ -179,43 +168,36 @@ export function useLocation(): UseLocationReturn {
         hasPermission: false
       }));
     }
-  }, [session, saveLocation]);
+  }, [user, saveLocation]);
 
-  // Load saved location from server
+  // Load saved location from localStorage only
   const refreshLocation = useCallback(async () => {
-    if (!session?.user) {
-      // No location loading for guest users
-      return;
-    }
-
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const response = await fetch('/api/location');
-      
-      if (response.status === 404) {
-        // No location saved yet
+      // Load from localStorage
+      const stored = localStorage.getItem('soulsync_location');
+      if (!stored) {
         setState(prev => ({ ...prev, isLoading: false, location: null }));
         return;
       }
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to load location');
-      }
-
-      const data = await response.json();
+      const data = JSON.parse(stored);
       
       setState(prev => ({
         ...prev,
-        location: data.location,
+        location: {
+          country: data.country,
+          state: data.state,
+          city: data.city,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          accuracy: data.accuracy
+        },
         isLoading: false,
-        lastUpdated: data.location.lastUpdated,
+        lastUpdated: new Date(data.lastUpdated).toISOString(),
         hasPermission: true
       }));
-
-      // Update localStorage
-      localStorage.setItem('soulsync_location', JSON.stringify(data.location));
 
     } catch (error) {
       console.error('Refresh location error:', error);
@@ -225,19 +207,11 @@ export function useLocation(): UseLocationReturn {
         error: error instanceof Error ? error.message : 'Failed to load location'
       }));
     }
-  }, [session]);
+  }, []);
 
-  // Clear location data
+  // Clear location data from localStorage only
   const clearLocation = useCallback(async () => {
-    if (session?.user) {
-      try {
-        await fetch('/api/location', { method: 'DELETE' });
-      } catch (error) {
-        console.error('Failed to delete server location:', error);
-      }
-    }
-
-    // Clear local storage (only authenticated user data)
+    // Clear local storage
     localStorage.removeItem('soulsync_location');
     
     setState(prev => ({
@@ -246,11 +220,11 @@ export function useLocation(): UseLocationReturn {
       lastUpdated: null,
       error: null
     }));
-  }, [session]);
+  }, [user]);
 
   // Load location on session change
   useEffect(() => {
-    if (status === 'loading') return;
+    if (loading) return;
     
     refreshLocation();
   }, [status, refreshLocation]);

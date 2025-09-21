@@ -1,20 +1,20 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useSafeAuth } from '../../contexts/useSafeAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function DebugPage() {
-  const { data: session, status } = useSession();
+  const { user, loading } = useSafeAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (!user && !loading) {
       router.push('/signin');
     }
-  }, [status, router]);
+  }, [user, loading, router]);
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -22,7 +22,7 @@ export default function DebugPage() {
     );
   }
 
-  if (!session?.user) {
+  if (!user) {
     return null;
   }
 
@@ -35,7 +35,7 @@ export default function DebugPage() {
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-4">🔍 Raw Session Data</h2>
           <pre className="bg-gray-100 p-4 rounded text-sm overflow-auto">
-            {JSON.stringify(session, null, 2)}
+            {JSON.stringify({ user, firebaseAuth: true }, null, 2)}
           </pre>
         </div>
 
@@ -57,21 +57,21 @@ export default function DebugPage() {
             <div>
               <label className="block font-medium text-gray-700">Email Domain:</label>
               <p className="text-lg font-mono bg-gray-100 px-2 py-1 rounded">
-                {(session.user as any).domain}
+                {user.email?.split('@')[1] || 'N/A'}
               </p>
             </div>
 
             <div>
               <label className="block font-medium text-gray-700">Anonymous Name:</label>
               <p className="text-lg font-bold text-blue-600">
-                {(session.user as any).anonymousName}
+                {user.displayName || user.email?.split('@')[0] || 'N/A'}
               </p>
             </div>
 
             <div>
               <label className="block font-medium text-gray-700">Institution Detection:</label>
               {(() => {
-                const emailDomain = session.user.email?.split('@')[1];
+                const emailDomain = user.email?.split('@')[1];
                 const domainMap: { [key: string]: string } = {
                   'sairamtap.edu.in': 'Sairam Engineering College',
                   'iitm.ac.in': 'IIT Madras',

@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '../contexts/AuthContext';
 import { ScreeningResult } from '@/types/screening';
 import AnimatedFace from '@/components/AnimatedFace';
 
@@ -19,7 +19,7 @@ export default function ScreeningResults({
   onViewResources, 
   onSaveResults 
 }: ScreeningResultsProps) {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [location, setLocation] = useState<any>(null);
   const [culturalRecommendations, setCulturalRecommendations] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -50,15 +50,15 @@ export default function ScreeningResults({
 
   useEffect(() => {
     // Get user's location for cultural recommendations
-    const userLocation = session?.user?.locationData;
+    const userLocation = null; // Will implement location from user preferences later
     if (userLocation) {
       setLocation(userLocation);
       generateCulturalRecommendations(result.severity, userLocation);
     }
-  }, [session, result.severity]);
+  }, [user, result.severity]);
 
   const handleSaveResults = async () => {
-    if (!session?.user?.email) {
+    if (!user?.email) {
       alert('Please sign in to save your results');
       return;
     }
@@ -67,31 +67,41 @@ export default function ScreeningResults({
     setSaveStatus('idle');
 
     try {
-      const response = await fetch('/api/screening-save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          screeningType: result.screeningType,
-          totalScore: result.totalScore,
-          answers: result.answers,
-          interpretation: result.interpretation,
-          severity: result.severity,
-          recommendations: result.recommendations,
-          culturalRecommendations: culturalRecommendations,
-          completedAt: new Date().toISOString()
-        }),
-      });
+      // Save to localStorage instead of API
+      const screeningData = {
+        id: Date.now().toString(),
+        screeningType: result.screeningType,
+        totalScore: result.totalScore,
+        answers: result.answers,
+        interpretation: result.interpretation,
+        severity: result.severity,
+        recommendations: result.recommendations,
+        culturalRecommendations: culturalRecommendations,
+        completedAt: new Date().toISOString(),
+        userEmail: user.email
+      };
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to save results');
-      }
+      // Get existing results
+      const existingResults = JSON.parse(localStorage.getItem('soulsync_screening_results') || '[]');
+      
+      // Add new result
+      existingResults.push(screeningData);
+      
+      // Keep only last 10 results per user
+      const userResults = existingResults.filter((r: any) => r.userEmail === user.email);
+      const otherResults = existingResults.filter((r: any) => r.userEmail !== user.email);
+      const limitedUserResults = userResults.slice(-10);
+      
+      localStorage.setItem('soulsync_screening_results', JSON.stringify([...otherResults, ...limitedUserResults]));
 
       setSaveStatus('success');
-      setNextTestInfo(data.data);
+      
+      // Mock next test info since we don't have server logic
+      setNextTestInfo({
+        canRetakeNow: false,
+        nextTestRecommended: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+        message: 'Results saved locally. You can retake this test in 7 days for best tracking.'
+      });
       
       // Call the optional onSaveResults prop if provided
       if (onSaveResults) {
@@ -463,7 +473,7 @@ export default function ScreeningResults({
         transition={{ delay: 1 }}
         className="flex flex-wrap gap-4 justify-center"
       >
-        {session?.user?.email && (
+        {user?.email && (
           <button
             onClick={handleSaveResults}
             disabled={isSaving || saveStatus === 'success'}

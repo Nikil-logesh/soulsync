@@ -2,17 +2,19 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { useSession } from "next-auth/react";
 import { useLocation } from "../../hooks/useLocation";
 import VoiceInput from "../../components/VoiceInput";
+import { useAuth } from "../../contexts/AuthContext";
+import { aiService } from "../../lib/aiService";
 
 export default function PromptPage() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Array<{
     id: string;
     type: 'user' | 'ai';
     content: string;
     timestamp: Date;
+    language?: string;
   }>>([]);
   const [popup, setPopup] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -21,13 +23,14 @@ export default function PromptPage() {
   
   const { location, detectLocation } = useLocation();
 
-  const handleVoiceTranscript = async (transcript: string) => {
+  const handleVoiceTranscript = async (transcript: string, language: string = 'en-US') => {
     // Add user message to chat
     const userMessage = {
       id: `user-${++messageIdRef.current}`,
       type: 'user' as const,
       content: transcript,
-      timestamp: new Date()
+      timestamp: new Date(),
+      language: language
     };
     setMessages(prev => [...prev, userMessage]);
     
@@ -36,57 +39,37 @@ export default function PromptPage() {
     setPopup(null);
 
     try {
-      const guestMode = !session?.user;
-      const requestBody: any = { 
-        userPrompt: transcript,
-        guestMode: guestMode
-      };
+      const guestMode = !user;
       
-      // Include location data if available for cultural responses
-      if (location) {
-        requestBody.userLocation = {
+      // Build context object for AI service
+      const context = {
+        location: location ? {
           country: location.country,
           state: location.state,
           city: location.city
-        };
-      }
+        } : undefined,
+        language: language,
+        guestMode: guestMode
+      };
 
-      // Include previous conversation context for personalized responses
-      const recentMessages = messages.slice(-6); // Last 6 messages for context
-      if (recentMessages.length > 0) {
-        requestBody.conversationHistory = recentMessages.map(msg => ({
-          role: msg.type === 'user' ? 'user' : 'assistant',
-          content: msg.content,
-          timestamp: msg.timestamp
-        }));
-      }
+      // Use AI service for intelligent responses
+      const data = await aiService.generateResponse(transcript, context);
 
-      const res = await fetch("/api/prompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        if (data.action === "popup") {
-          setPopup(data);
-        } else {
-          // Add AI response to chat
-          const aiMessage = {
-            id: `ai-${++messageIdRef.current}`,
-            type: 'ai' as const,
-            content: data.reply,
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, aiMessage]);
-        }
+      if (data.action === "popup") {
+        setPopup(data);
       } else {
-        setError(data.error || "Something went wrong.");
+        // Add AI response to chat
+        const aiMessage = {
+          id: `ai-${++messageIdRef.current}`,
+          type: 'ai' as const,
+          content: data.message,
+          timestamp: new Date(),
+          language: language
+        };
+        setMessages(prev => [...prev, aiMessage]);
       }
     } catch (err) {
-      setError("Failed to connect to server.");
+      setError("Failed to generate AI response.");
     } finally {
       setLoading(false);
     }

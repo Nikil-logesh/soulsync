@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '../../contexts/AuthContext';
 import PHQ9Screening from '@/components/PHQ9Screening';
 import GAD7Screening from '@/components/GAD7Screening';
 import GHQ12Screening from '@/components/GHQ12Screening';
@@ -46,7 +46,7 @@ const screeningOptions = [
 ];
 
 export default function ScreeningHub() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [selectedScreening, setSelectedScreening] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState<ScreeningResult | null>(null);
@@ -77,7 +77,7 @@ export default function ScreeningHub() {
   };
 
   const handleSaveResults = async () => {
-    if (!results || !session) return;
+    if (!results || !user) return;
 
     try {
       const response = await fetch('/api/screening-results', {
@@ -112,7 +112,7 @@ export default function ScreeningHub() {
 
   // Show screening component if one is selected
   if (selectedScreening && !showResults) {
-    const language = session?.user?.preferredLanguage || 'en';
+    const language = 'en'; // Default language since we don't have user preferences in Firebase yet
     
     if (selectedScreening === 'phq9') {
       return (
@@ -164,7 +164,7 @@ export default function ScreeningHub() {
         result={results}
         onRetakeTest={handleRetakeTest}
         onViewResources={handleViewResources}
-        onSaveResults={session ? handleSaveResults : undefined}
+        onSaveResults={user ? handleSaveResults : undefined}
       />
     );
   }
@@ -194,7 +194,7 @@ export default function ScreeningHub() {
         </motion.div>
 
         {/* User Status */}
-        {session ? (
+        {user ? (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -203,12 +203,12 @@ export default function ScreeningHub() {
             <div className="flex items-center">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-4">
                 <span className="text-white font-bold">
-                  {session.user?.name?.charAt(0) || '👤'}
+                  {user.email?.charAt(0).toUpperCase() || '👤'}
                 </span>
               </div>
               <div>
                 <p className="font-semibold text-gray-800">
-                  Welcome back, {session.user?.anonymousName || session.user?.name}
+                  Welcome back, {user.displayName || user.email?.split('@')[0] || 'User'}
                 </p>
                 <p className="text-sm text-gray-600">
                   Your results will be saved securely for progress tracking

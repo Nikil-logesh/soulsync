@@ -9,17 +9,15 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@auth/core": "^0.40.0",
-    "@auth/nextjs": "0.0.0-380f8d56",
     "@google-cloud/vertexai": "^1.10.0",
     "@heroicons/react": "^2.2.0",
     "bcryptjs": "^3.0.2",
     "cookie": "^1.0.2",
+    "firebase": "^12.3.0",
     "firebase-admin": "^13.5.0",
     "framer-motion": "^12.23.13",
     "jsonwebtoken": "^9.0.2",
     "next": "15.5.2",
-    "next-auth": "^4.24.11",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },

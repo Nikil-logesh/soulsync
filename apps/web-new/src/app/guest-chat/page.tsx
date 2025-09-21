@@ -1,16 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { aiService } from "../../lib/aiService";
 import Link from "next/link";
-import VoiceInput from "../../components/VoiceInput";
+// import VoiceInput from "../../components/VoiceInput"; // Temporarily disabled
 
 export default function GuestChatPage() {
   const [messages, setMessages] = useState<Array<{type: 'user' | 'ai', content: string}>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [messageCount, setMessageCount] = useState(0);
+  const [inputText, setInputText] = useState(""); // Added for text input
   const MAX_MESSAGES = 3;
+
+  // Handle text input submission
+  const handleTextSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+    
+    await handleVoiceTranscript(inputText);
+    setInputText("");
+  };
 
   const handleVoiceTranscript = async (transcript: string) => {
     if (messageCount >= MAX_MESSAGES) {
@@ -29,50 +40,30 @@ export default function GuestChatPage() {
     setMessageCount(prev => prev + 1);
 
     try {
-      const requestBody: any = { userPrompt: transcript, guestMode: true };
+      // Use AI service for intelligent responses in guest mode
+      const context = {
+        guestMode: true
+      };
+      const data = await aiService.generateResponse(transcript, context);
+
+      let aiResponse = "";
       
-      // No location data for guest users - only for authenticated users
-
-      // Call the actual AI API for guest mode with real responses
-      const res = await fetch("/api/prompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        let aiResponse = "";
-        
-        if (data.action === "popup") {
-          // Handle crisis/severe cases in guest mode
-          aiResponse = `🚨 ${data.message}\n\n`;
-          if (data.resources && data.resources.length > 0) {
-            aiResponse += "Resources:\n";
-            data.resources.forEach((resource: any) => {
-              aiResponse += `• ${resource.name}: ${resource.url}\n`;
-            });
-          }
-          aiResponse += "\n💡 Sign in to SoulSync for personalized crisis support and more comprehensive assistance.";
-        } else {
-          // Normal chat response with guest mode note
-          aiResponse = data.reply + "\n\n💡 This is guest mode with limited responses. Sign in for unlimited access to SoulSync's full AI capabilities!";
+      if (data.action === "popup") {
+        // Handle crisis/severe cases in guest mode
+        aiResponse = `🚨 ${data.message}\n\n`;
+        if (data.resources && data.resources.length > 0) {
+          aiResponse += "Resources:\n";
+          data.resources.forEach((resource: string) => {
+            aiResponse += `• ${resource}\n`;
+          });
         }
-        
-        setMessages([...newMessages, { type: 'ai', content: aiResponse }]);
+        aiResponse += "\n💡 Sign in to SoulSync for personalized crisis support and more comprehensive assistance.";
       } else {
-        // Fallback for API errors
-        const fallbackResponse = `I understand you're looking for support. While I'm experiencing some technical difficulties, here are some immediate techniques:
-
-🌟 **Breathing**: Try the 4-7-8 technique (inhale 4, hold 7, exhale 8)
-🧠 **Grounding**: Name 5 things you can see, 4 you can hear, 3 you can touch
-💙 **Remember**: You're not alone, and reaching out shows strength
-
-💡 Sign in to SoulSync for full AI-powered support and unlimited conversations!`;
-        
-        setMessages([...newMessages, { type: 'ai', content: fallbackResponse }]);
+        // Normal chat response with guest mode note
+        aiResponse = data.message + "\n\n💡 This is guest mode with limited responses. Sign in for unlimited access to SoulSync's full AI capabilities!";
       }
+        
+      setMessages([...newMessages, { type: 'ai', content: aiResponse }]);
       
     } catch (err) {
       setError("Failed to get response. Please try again.");
@@ -141,18 +132,39 @@ export default function GuestChatPage() {
           ))}
         </div>
 
-        {/* Voice Input Component */}
+        {/* Text Input Component (Voice temporarily disabled) */}
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
           className="w-full max-w-2xl relative"
         >
-          <VoiceInput 
-            onTranscript={handleVoiceTranscript}
-            placeholder={messageCount >= MAX_MESSAGES ? "Guest limit reached - Sign in for more!" : "Share your thoughts... You can type or speak in any language"}
-            disabled={messageCount >= MAX_MESSAGES || loading}
-          />
+          <form onSubmit={handleTextSubmit} className="relative">
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder={messageCount >= MAX_MESSAGES ? "Guest limit reached - Sign in for more!" : "Share your thoughts... Type your message here"}
+              disabled={messageCount >= MAX_MESSAGES || loading}
+              className="w-full p-4 pr-12 text-lg border-2 border-blue-200 rounded-2xl focus:border-blue-400 focus:outline-none transition-colors bg-white/90 backdrop-blur-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+            />
+            <button
+              type="submit"
+              disabled={messageCount >= MAX_MESSAGES || loading || !inputText.trim()}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
+              </svg>
+            </button>
+          </form>
+          
+          {/* Note about voice input being disabled */}
+          <div className="mt-1 text-center">
+            <span className="text-xs text-gray-500">
+              Voice input temporarily disabled - Text input only
+            </span>
+          </div>
           
           {/* Guest Usage Counter */}
           <div className="mt-2 text-center">

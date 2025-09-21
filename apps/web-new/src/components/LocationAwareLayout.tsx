@@ -1,7 +1,7 @@
 // apps/web-new/src/components/LocationAwareLayout.tsx
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSafeAuth } from "../contexts/useSafeAuth";
 import { motion } from "framer-motion";
 import SilentLocationDetector from "./SilentLocationDetector";
 import { useLocation } from "../hooks/useLocation";
@@ -17,10 +17,10 @@ export default function LocationAwareLayout({
   showLocationPrompt = false, // Default to false for silent operation
   skipForGuests = false 
 }: LocationAwareLayoutProps) {
-  const { data: session, status } = useSession();
+  const { user, loading } = useSafeAuth();
   const { location, clearLocation } = useLocation();
 
-  const isAuthenticated = status === 'authenticated';
+  const isAuthenticated = !!user;
 
   return (
     <div className="relative">

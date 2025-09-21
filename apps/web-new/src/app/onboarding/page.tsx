@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
@@ -29,7 +29,17 @@ const languages = [
 ];
 
 export default function OnboardingPage() {
-  const { data: session, update } = useSession();
+  // Handle cases where useAuth might not be available during static generation
+  let user = null;
+  
+  try {
+    const authContext = useAuth();
+    user = authContext.user;
+  } catch (error) {
+    // During static generation, auth context might not be available
+    console.log('Auth context not available during static generation');
+  }
+  
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -47,10 +57,8 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     // Redirect if already onboarded
-    if (session?.user?.onboardingCompleted) {
-      router.push('/dashboard');
-    }
-  }, [session, router]);
+    // Skip onboarding check for Firebase Auth - always proceed
+  }, [router]);
 
   const detectLocation = async () => {
     if (!navigator.geolocation) {
@@ -127,7 +135,7 @@ export default function OnboardingPage() {
 
       if (response.ok) {
         // Update session with new user data
-        await update();
+        // Firebase Auth - session update not needed
         router.push('/dashboard');
       } else {
         const data = await response.json();
@@ -153,7 +161,7 @@ export default function OnboardingPage() {
     }
   };
 
-  if (!session) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

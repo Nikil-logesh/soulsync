@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   PlayIcon, 
   BookOpenIcon, 
@@ -22,6 +22,7 @@ interface Resource {
   language: string;
   duration?: number;
   thumbnailUrl?: string;
+  url: string; // Add actual URL for the resource
   severity: 'all' | 'mild' | 'moderate' | 'severe';
   tags: string[];
   views: number;
@@ -32,156 +33,194 @@ interface Resource {
 const MOCK_RESOURCES: Resource[] = [
   {
     id: '1',
-    title: 'Board Exam Stress: Coping Strategies for Indian Students',
-    description: 'Practical techniques to manage board exam anxiety, family pressure, and academic stress. Specifically designed for Indian high school students.',
-    type: 'video',
-    category: 'Academic Stress',
+    title: 'TherapyRoute India - State-wise Mental Health Resources',
+    description: 'Comprehensive directory of mental health resources across Indian states including Assam, Bengaluru, Chennai, Goa, Gujarat, Kerala, Kolkata, Mumbai, New Delhi, Pune with organizations, helplines, and counseling services.',
+    type: 'guide',
+    category: 'Mental Health Resources',
     language: 'en',
-    duration: 480, // 8 minutes
-    thumbnailUrl: '/api/placeholder/video-thumb-1',
-    severity: 'moderate',
-    tags: ['board-exams', 'academic-stress', 'indian-students', 'anxiety'],
+    duration: 600, // 10 minutes read
+    thumbnailUrl: '/api/placeholder/guide-thumb-1',
+    url: 'https://www.therapyroute.com/article/free-mental-health-resources-in-india-by-therapyroute',
+    severity: 'all',
+    tags: ['state-wise', 'helplines', 'counseling', 'organizations'],
     views: 2456,
     likes: 189
   },
   {
     id: '2',
-    title: 'Career Confusion? Finding Your Path in India',
-    description: 'Navigate career choices, family expectations vs personal dreams, and the pressure of competitive exams in Indian context.',
+    title: 'National Tele Mental Health Programme (Tele MANAS)',
+    description: 'Government of India\'s 24/7 toll-free helpline (14416) providing tele-counselling, psychotherapy, psychiatric consultation in 20+ languages across India.',
     type: 'guide',
-    category: 'Career Guidance',
+    category: 'Government Resources',
     language: 'en',
-    duration: 600, // 10 minutes read
-    thumbnailUrl: '/api/placeholder/guide-thumb-1',
-    severity: 'mild',
-    tags: ['career', 'family-pressure', 'competitive-exams', 'dreams'],
-    views: 1823,
-    likes: 145
-  },
-  {
-    id: '3',
-    title: 'Pranayama for Mental Peace (प्राणायाम मानसिक शांति के लिए)',
-    description: 'Traditional Indian breathing techniques combined with modern mindfulness for young adults dealing with stress and anxiety.',
-    type: 'audio',
-    category: 'Mindfulness & Meditation',
-    language: 'hi',
-    duration: 900, // 15 minutes
-    thumbnailUrl: '/api/placeholder/audio-thumb-1',
+    duration: 300, // 5 minutes read
+    thumbnailUrl: '/api/placeholder/guide-thumb-2',
+    url: 'https://www.pib.gov.in/PressNoteDetails.aspx?NoteId=153277&ModuleId=3',
     severity: 'all',
-    tags: ['pranayama', 'breathing', 'traditional', 'anxiety-relief'],
+    tags: ['government', 'helpline', 'multilingual', 'tele-counseling'],
     views: 3421,
     likes: 267
   },
   {
-    id: '4',
-    title: 'Understanding Depression in Tamil Culture (தமிழ் கலாச்சாரத்தில் மனச்சோர்வு)',
-    description: 'Breaking stigma around depression in Tamil families. Learn to recognize symptoms and seek help while respecting cultural values.',
-    type: 'video',
-    category: 'Depression Support',
-    language: 'ta',
-    duration: 720, // 12 minutes
-    thumbnailUrl: '/api/placeholder/video-thumb-2',
+    id: '3',
+    title: 'Live Love Laugh Foundation - Mental Health Helplines',
+    description: 'Mental health NGO with awareness campaigns and helpline services in multiple Indian languages for crisis support and guidance.',
+    type: 'guide',
+    category: 'NGO Resources',
+    language: 'en',
+    duration: 240, // 4 minutes read
+    thumbnailUrl: '/api/placeholder/guide-thumb-3',
+    url: 'https://www.thelivelovelaughfoundation.org/find-help/helplines',
     severity: 'moderate',
-    tags: ['depression', 'tamil', 'stigma', 'family-support'],
-    views: 1567,
-    likes: 134
+    tags: ['ngo', 'helplines', 'crisis-support', 'multilingual'],
+    views: 1823,
+    likes: 145
+  },
+  {
+    id: '4',
+    title: 'Guided Meditation in Hindi by Sri Sri Ravi Shankar',
+    description: 'Deep relaxation and stress relief meditation session in Hindi for 22 minutes. Perfect for beginners and experienced practitioners.',
+    type: 'audio',
+    category: 'Mindfulness & Meditation',
+    language: 'hi',
+    duration: 1320, // 22 minutes
+    thumbnailUrl: '/api/placeholder/audio-thumb-1',
+    url: 'https://www.youtube.com/watch?v=dD63eGlJd2A',
+    severity: 'all',
+    tags: ['hindi', 'meditation', 'stress-relief', 'sri-sri-ravi-shankar'],
+    views: 4235,
+    likes: 342
   },
   {
     id: '5',
-    title: 'College Transition: From Home to Hostel Life',
-    description: 'Dealing with homesickness, making new friends, and adapting to independence during college years in India.',
+    title: 'Amaha - Online Therapy & Psychiatry Platform',
+    description: 'Professional online counseling and psychiatry services available across India with qualified therapists and psychiatrists.',
     type: 'guide',
-    category: 'Life Transitions',
+    category: 'Professional Services',
     language: 'en',
-    duration: 420, // 7 minutes read
-    thumbnailUrl: '/api/placeholder/guide-thumb-2',
-    severity: 'mild',
-    tags: ['college', 'independence', 'homesickness', 'friendship'],
+    duration: 360, // 6 minutes read
+    thumbnailUrl: '/api/placeholder/guide-thumb-4',
+    url: 'https://www.amahahealth.com',
+    severity: 'moderate',
+    tags: ['online-therapy', 'psychiatry', 'professional', 'counseling'],
     views: 2189,
     likes: 178
   },
   {
     id: '6',
-    title: 'Social Media & Mental Health for Indian Youth',
-    description: 'Managing Instagram pressure, comparison trap, and building healthy digital habits for better mental wellness.',
-    type: 'video',
-    category: 'Digital Wellness',
+    title: '10-Minute Guided Meditation for Stress Relief',
+    description: 'Quick stress relief meditation session suitable for beginners. Perfect for daily practice and immediate relaxation.',
+    type: 'audio',
+    category: 'Mindfulness & Meditation',
     language: 'en',
-    duration: 540, // 9 minutes
-    thumbnailUrl: '/api/placeholder/video-thumb-3',
-    severity: 'mild',
-    tags: ['social-media', 'comparison', 'digital-wellness', 'self-esteem'],
-    views: 4235,
-    likes: 342
+    duration: 600, // 10 minutes
+    thumbnailUrl: '/api/placeholder/audio-thumb-2',
+    url: 'https://www.youtube.com/watch?v=lS0kcSNlULw',
+    severity: 'all',
+    tags: ['meditation', 'stress-relief', 'beginners', 'headspace'],
+    views: 5432,
+    likes: 423
   },
   {
     id: '7',
-    title: 'Relationship Anxiety in Indian Context',
-    description: 'Navigating romantic relationships, family approval, and cultural expectations while maintaining your mental health.',
+    title: 'Center for Mental Health India',
+    description: 'Online and offline counseling services for individuals, couples, and families. Professional psychological therapies across various age groups.',
     type: 'guide',
-    category: 'Relationships',
+    category: 'Professional Services',
     language: 'en',
     duration: 480, // 8 minutes read
-    thumbnailUrl: '/api/placeholder/guide-thumb-3',
+    thumbnailUrl: '/api/placeholder/guide-thumb-5',
+    url: 'https://www.centerformentalhealth.in',
     severity: 'moderate',
-    tags: ['relationships', 'family-approval', 'dating', 'cultural-expectations'],
+    tags: ['counseling', 'therapy', 'family', 'professional'],
     views: 1789,
     likes: 156
   },
   {
     id: '8',
-    title: 'Job Interview Confidence for Indian Freshers',
-    description: 'Overcoming imposter syndrome, building confidence, and managing pre-interview anxiety for first-time job seekers.',
-    type: 'video',
-    category: 'Career Guidance',
+    title: '5-Minute Quick Meditation for Instant Relief',
+    description: 'Short meditation session perfect for busy schedules. Provides instant stress relief and mindfulness in just 5 minutes.',
+    type: 'audio',
+    category: 'Mindfulness & Meditation',
     language: 'en',
-    duration: 600, // 10 minutes
-    thumbnailUrl: '/api/placeholder/video-thumb-4',
+    duration: 300, // 5 minutes
+    thumbnailUrl: '/api/placeholder/audio-thumb-3',
+    url: 'https://www.youtube.com/watch?v=inpok4MKVLM',
+    severity: 'all',
+    tags: ['quick-meditation', 'stress-relief', 'mindfulness', 'busy-schedule'],
+    views: 3124,
+    likes: 276
+  },
+  {
+    id: '9',
+    title: 'Hindi Meditation for Stress Relief (15 minutes)',
+    description: 'Guided mindfulness meditation in Hindi by Shivangi Desai for stress relief and anxiety management. Suitable for Hindi speakers.',
+    type: 'audio',
+    category: 'Mindfulness & Meditation',
+    language: 'hi',
+    duration: 900, // 15 minutes
+    thumbnailUrl: '/api/placeholder/audio-thumb-4',
+    url: 'https://www.youtube.com/watch?v=2ntenE9Fn5c',
     severity: 'mild',
-    tags: ['job-interviews', 'confidence', 'imposter-syndrome', 'freshers'],
+    tags: ['hindi', 'stress-relief', 'anxiety', 'mindfulness'],
     views: 2934,
     likes: 218
   },
   {
-    id: '9',
-    title: 'Meditation in Bengali (বাংলায় ধ্যান)',
-    description: 'Guided meditation session in Bengali for stress relief and emotional balance, incorporating Bengali cultural elements.',
+    id: '10',
+    title: 'WHO India Mental Health Resources',
+    description: 'World Health Organization\'s comprehensive overview of mental health in India including legal framework and Mental Healthcare Act, 2017.',
+    type: 'guide',
+    category: 'Government Resources',
+    language: 'en',
+    duration: 720, // 12 minutes read
+    thumbnailUrl: '/api/placeholder/guide-thumb-6',
+    url: 'https://www.who.int/india/health-topics/mental-health',
+    severity: 'all',
+    tags: ['who', 'government', 'legal-framework', 'healthcare-act'],
+    views: 1567,
+    likes: 134
+  },
+  {
+    id: '11',
+    title: 'Brahma Kumaris Guided Meditation Audio Collection',
+    description: 'Collection of guided meditations in Hindi and English including soul sustenance, daily affirmations, and spiritual healing.',
     type: 'audio',
     category: 'Mindfulness & Meditation',
-    language: 'bn',
-    duration: 780, // 13 minutes
-    thumbnailUrl: '/api/placeholder/audio-thumb-2',
+    language: 'hi',
+    duration: 1200, // 20 minutes average
+    thumbnailUrl: '/api/placeholder/audio-thumb-5',
+    url: 'https://www.brahmakumaris.com/audio/guided-meditations/',
     severity: 'all',
-    tags: ['meditation', 'bengali', 'stress-relief', 'emotional-balance'],
+    tags: ['brahma-kumaris', 'spiritual', 'hindi', 'guided-meditation'],
     views: 1456,
     likes: 98
   },
   {
-    id: '10',
-    title: 'Family Pressure & Mental Health: A Youth Guide',
-    description: 'Balancing family expectations with personal mental wellness. Learn healthy communication and boundary-setting techniques.',
+    id: '12',
+    title: 'Idanim - Free Meditation App (Hindi & English)',
+    description: '100% free meditation app with daily live sessions and guided meditations in Hindi and English. No subscription required.',
     type: 'guide',
-    category: 'Family Dynamics',
-    language: 'en',
-    duration: 660, // 11 minutes read
-    thumbnailUrl: '/api/placeholder/guide-thumb-4',
-    severity: 'moderate',
-    tags: ['family-pressure', 'boundaries', 'communication', 'expectations'],
-    views: 3124,
-    likes: 276
+    category: 'Mobile Apps',
+    language: 'hi',
+    duration: 180, // 3 minutes read
+    thumbnailUrl: '/api/placeholder/guide-thumb-7',
+    url: 'https://www.idanim.com',
+    severity: 'all',
+    tags: ['app', 'free', 'hindi', 'live-sessions'],
+    views: 4128,
+    likes: 387
   }
 ];
 
 const CATEGORIES = [
   'All Categories',
-  'Academic Stress',
-  'Career Guidance', 
+  'Mental Health Resources',
+  'Government Resources', 
+  'NGO Resources',
+  'Professional Services',
   'Mindfulness & Meditation',
-  'Depression Support',
-  'Life Transitions',
-  'Digital Wellness',
-  'Relationships',
-  'Family Dynamics'
+  'Mobile Apps'
 ];
 
 const LANGUAGES = [
@@ -199,7 +238,7 @@ const LANGUAGES = [
 ];
 
 export default function ResourcesPage() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [resources, setResources] = useState<Resource[]>(MOCK_RESOURCES);
   const [filteredResources, setFilteredResources] = useState<Resource[]>(MOCK_RESOURCES);
   const [searchTerm, setSearchTerm] = useState('');
@@ -237,6 +276,21 @@ export default function ResourcesPage() {
 
     setFilteredResources(filtered);
   }, [searchTerm, selectedCategory, selectedLanguage, selectedType, resources]);
+
+  // Handle resource click to open in new tab
+  const handleResourceClick = (resource: Resource) => {
+    // Open the resource URL in a new tab
+    window.open(resource.url, '_blank', 'noopener,noreferrer');
+    
+    // Optionally update view count (in a real app, this would be an API call)
+    setResources(prevResources => 
+      prevResources.map(r => 
+        r.id === resource.id 
+          ? { ...r, views: r.views + 1 }
+          : r
+      )
+    );
+  };
 
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -408,6 +462,7 @@ export default function ResourcesPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ y: -5, scale: 1.02 }}
+              onClick={() => handleResourceClick(resource)}
               className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all cursor-pointer"
             >
               {/* Thumbnail/Header */}

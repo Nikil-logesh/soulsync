@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSafeAuth } from '../../contexts/useSafeAuth';
 
 interface ScreeningHistory {
   id: string;
@@ -15,31 +15,30 @@ interface ScreeningHistory {
 }
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { user, loading: authLoading } = useSafeAuth();
   const [screeningHistory, setScreeningHistory] = useState<ScreeningHistory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (session?.user?.email) {
+    if (user?.email) {
       fetchScreeningHistory();
-    } else if (status !== 'loading') {
+    } else if (!authLoading) {
       setLoading(false);
     }
-  }, [session, status]);
+  }, [user, authLoading]);
 
   const fetchScreeningHistory = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/screening-save');
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch screening history');
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setScreeningHistory(data.data);
+      // Get screening history from localStorage instead of API
+      const storedResults = localStorage.getItem('soulsync_screening_results');
+      if (storedResults) {
+        const allResults = JSON.parse(storedResults);
+        const userResults = allResults.filter((result: any) => result.userEmail === user?.email);
+        setScreeningHistory(userResults);
+      } else {
+        setScreeningHistory([]);
       }
     } catch (error) {
       console.error('Error fetching screening history:', error);
@@ -48,7 +47,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
@@ -59,7 +58,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (status === 'unauthenticated') {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
         <div className="text-center max-w-md">
@@ -67,7 +66,7 @@ export default function ProfilePage() {
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Sign In Required</h1>
           <p className="text-gray-600 mb-6">Please sign in to view your mental health profile and screening history.</p>
           <a 
-            href="/api/auth/signin"
+            href="/signin"
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Sign In

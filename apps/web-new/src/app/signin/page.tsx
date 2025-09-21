@@ -1,20 +1,28 @@
 'use client';
 
-import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { useSafeAuth } from '../../contexts/useSafeAuth';
 
 export default function SignInPage() {
-  const { data: session, status } = useSession();
+  const { user, loading, signInWithGoogle } = useSafeAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (user) {
       router.push('/dashboard');
     }
-  }, [status, router]);
+  }, [user, router]);
 
-  if (status === 'loading') {
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error('Sign in error:', error);
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -45,7 +53,7 @@ export default function SignInPage() {
         {/* Sign In Options */}
         <div className="space-y-4">
           <button
-            onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+            onClick={handleGoogleSignIn}
             className="w-full flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 hover:bg-gray-50 transition duration-200"
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">

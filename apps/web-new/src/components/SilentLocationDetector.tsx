@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSafeAuth } from '../contexts/useSafeAuth';
 import { useLocation } from "../hooks/useLocation";
 
 interface LocationData {
@@ -15,7 +15,7 @@ interface LocationData {
 }
 
 export default function SilentLocationDetector() {
-  const { data: session, status } = useSession();
+  const { user, loading } = useSafeAuth();
   const { location, saveLocation } = useLocation();
 
   // Silent reverse geocoding function using our proxy API
@@ -97,7 +97,7 @@ export default function SilentLocationDetector() {
             locationData.accuracy = accuracy;
             
             // Auto-save only for authenticated users
-            if (session?.user) {
+            if (user) {
               await saveLocation(locationData);
             }
             // Remove guest location storage - guests don't get location detection
@@ -133,10 +133,10 @@ export default function SilentLocationDetector() {
 
   // Auto-detect location when component mounts and when user logs in
   useEffect(() => {
-    if (status === 'loading') return;
+    if (loading) return;
     
     // Only detect location for authenticated users
-    if (status !== 'authenticated' || !session?.user) return;
+    if (user || !user) return;
     
     // Don't detect if location already exists
     if (location) return;
@@ -147,16 +147,16 @@ export default function SilentLocationDetector() {
     }, 2000); // 2 second delay for better UX
 
     return () => clearTimeout(timer);
-  }, [status, location, session]);
+  }, [user, location]);
 
   // Re-detect if user logs in and no location is saved
   useEffect(() => {
-    if (status === 'authenticated' && session?.user && !location) {
+    if (user && !location) {
       // Remove guest location transfer since guests don't have location detection
       // Detect fresh location for new authenticated user
       setTimeout(detectLocationSilently, 1000);
     }
-  }, [status, session, location, saveLocation]);
+  }, [user, location, saveLocation]);
 
   // This component renders nothing - it's purely for background functionality
   return null;

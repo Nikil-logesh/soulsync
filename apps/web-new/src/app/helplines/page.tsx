@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '../../contexts/AuthContext';
 import { useLocation } from '../../hooks/useLocation';
 
 interface Helpline {
@@ -264,7 +264,7 @@ const nationalHelplines: Helpline[] = [
 ];
 
 export default function HelplinesPage() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const { location } = useLocation();
   const [selectedState, setSelectedState] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('all');

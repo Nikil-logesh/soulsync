@@ -9,11 +9,15 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  transpilePackages: ["@repo/ui"],
-  output: "export",
+  output: 'export',
+  distDir: 'dist',
   trailingSlash: true,
   images: {
     unoptimized: true,
+  },
+  // Disable API routes for static export
+  async rewrites() {
+    return [];
   },
 };
 

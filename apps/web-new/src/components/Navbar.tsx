@@ -1,21 +1,34 @@
 'use client';
 
-import { useSession, signIn, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ChatBubbleLeftIcon, UserIcon, HomeIcon, InformationCircleIcon, PhoneIcon, ClipboardDocumentCheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { useSafeAuth } from '../contexts/useSafeAuth';
 
 export default function Navbar() {
-  const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const { user, loading, signInWithGoogle, signOut } = useSafeAuth();
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: '/signin' });
+    try {
+      await signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
-  // Don't show navbar on signin page - use usePathname for SSR compatibility
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error('Error signing in:', error);
+    }
+  };
+
+  // Don't show navbar on signin page
   if (pathname === '/signin') {
     return null;
   }
@@ -26,7 +39,7 @@ export default function Navbar() {
       animate={{ y: 0, opacity: 1 }}
       className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-between px-6 py-3 rounded-2xl shadow-2xl bg-white/80 backdrop-blur-md border border-white/20 w-[95%] max-w-6xl"
     >
-      <Link href={status === 'authenticated' ? '/dashboard' : '/'}>
+      <Link href={user ? '/dashboard' : '/'}>
         <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -48,26 +61,11 @@ export default function Navbar() {
       <div className="flex items-center space-x-4">
         {/* Always available links */}
         <NavLink href="/screening" icon={ClipboardDocumentCheckIcon}>Screening</NavLink>
-        <NavLink href="/emergency" icon={ExclamationTriangleIcon} urgent>Emergency</NavLink>
-        <NavLink href="/about" icon={InformationCircleIcon}>About</NavLink>
-        <NavLink href="/contact" icon={PhoneIcon}>Contact</NavLink>
+        <NavLink href="/resources" icon={InformationCircleIcon}>Resources</NavLink>
+        <NavLink href="/helplines" icon={PhoneIcon}>Helplines</NavLink>
         
-        {/* Guest-accessible limited chat */}
-        {status === 'unauthenticated' && (
-          <NavLink href="/guest-chat" icon={ChatBubbleLeftIcon} highlight isLimited>
-            Try Chat
-          </NavLink>
-        )}
-        
-        {/* Authenticated user links */}
-        {status === 'authenticated' && (
-          <>
-            <NavLink href="/dashboard" icon={HomeIcon}>Dashboard</NavLink>
-            <NavLink href="/prompt" icon={ChatBubbleLeftIcon} highlight>Chat</NavLink>
-          </>
-        )}
-        
-        {status === 'loading' && (
+        {/* Loading state */}
+        {loading && (
           <motion.div 
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ repeat: Infinity, duration: 1.5 }}
@@ -77,32 +75,42 @@ export default function Navbar() {
           </motion.div>
         )}
         
-        {status === 'authenticated' && session?.user ? (
-          <div className="flex items-center space-x-3">
-            <motion.div 
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full"
-            >
-              <div className="w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                <UserIcon className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-xs text-gray-700 font-medium">
-                Anonymous User
-              </span>
-            </motion.div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSignOut}
-              className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full text-sm font-medium shadow-lg hover:shadow-xl transition-shadow"
-            >
-              Sign Out
-            </motion.button>
-          </div>
-        ) : null}
+        {/* Authenticated user links */}
+        {!loading && user && (
+          <>
+            <NavLink href="/dashboard" icon={HomeIcon}>Dashboard</NavLink>
+            <NavLink href="/prompt" icon={ChatBubbleLeftIcon} highlight>Chat</NavLink>
+            
+            <div className="flex items-center space-x-3">
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-full"
+              >
+                <div className="w-6 h-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
+                  <UserIcon className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-xs text-green-700 font-medium">
+                  {user.email?.split('@')[0] || 'User'}
+                </span>
+              </motion.div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSignOut}
+                className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full text-sm font-medium shadow-lg hover:shadow-xl transition-shadow"
+              >
+                Sign Out
+              </motion.button>
+            </div>
+          </>
+        )}
         
-        {status === 'unauthenticated' && (
+        {/* Unauthenticated user */}
+        {!loading && !user && (
           <div className="flex items-center space-x-2">
+            <NavLink href="/prompt" icon={ChatBubbleLeftIcon} highlight isLimited>
+              Try Chat
+            </NavLink>
             <motion.div 
               className="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-full"
             >
@@ -113,10 +121,10 @@ export default function Navbar() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => router.push('/signin')}
+              onClick={handleSignIn}
               className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full text-sm font-medium shadow-lg hover:shadow-xl transition-shadow"
             >
-              Sign In
+              📧 Sign in with Google
             </motion.button>
           </div>
         )}
