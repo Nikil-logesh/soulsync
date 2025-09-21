@@ -10,11 +10,11 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   transpilePackages: ["@repo/ui"],
-  // Removed static export for Vercel deployment
-  // output: "export",
-  // trailingSlash: true,
+  // Enable static export for Firebase hosting
+  output: "export",
+  trailingSlash: true,
   images: {
-    // unoptimized: true, // Let Vercel handle image optimization
+    unoptimized: true, // Required for static export
   },
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
