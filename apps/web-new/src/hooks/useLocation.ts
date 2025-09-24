@@ -227,7 +227,7 @@ export function useLocation(): UseLocationReturn {
     if (loading) return;
     
     refreshLocation();
-  }, [status, refreshLocation]);
+  }, [loading, refreshLocation]);
 
   return {
     ...state,

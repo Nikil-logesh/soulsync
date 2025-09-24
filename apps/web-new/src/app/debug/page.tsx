@@ -9,9 +9,10 @@ export default function DebugPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!user && !loading) {
-      router.push('/signin');
-    }
+    // Temporarily disable redirect to debug auth issues
+    // if (!user && !loading) {
+    //   router.push('/signin');
+    // }
   }, [user, loading, router]);
 
   if (loading) {

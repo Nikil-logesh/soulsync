@@ -44,6 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
+        console.log('Auth state changed:', user ? 'User logged in' : 'User logged out', user);
         setUser(user);
         setLoading(false);
       });
