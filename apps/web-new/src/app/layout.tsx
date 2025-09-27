@@ -10,8 +10,12 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50 text-gray-900">
+    <html lang="en" className="scroll-smooth">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#6aa16a" />
+      </head>
+      <body className="min-h-screen wellness-gradient antialiased">
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

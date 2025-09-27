@@ -8,10 +8,12 @@ export function useSafeAuth() {
     return useAuth();
   } catch (error) {
     // During static generation or if context is not available
+    // Set loading to true to prevent premature redirects
     return {
       user: null,
-      loading: false,
-      signInWithGoogle: async () => {},
+      userRole: null,
+      loading: true,
+      signInWithSupabase: async (email: string, password: string) => {},
       signOut: async () => {}
     };
   }

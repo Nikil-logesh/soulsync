@@ -6,14 +6,18 @@ import {
   signInWithPopup, 
   signOut as firebaseSignOut, 
   onAuthStateChanged,
-  GoogleAuthProvider 
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword 
 } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
+import { supabase, UserRole, LoginCredentials, authenticateUser } from '../lib/supabase';
 
 interface AuthContextType {
   user: User | null;
+  userRole: UserRole | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signInWithSupabase: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -33,6 +37,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,38 +47,84 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
-    try {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        console.log('Auth state changed:', user ? 'User logged in' : 'User logged out', user);
-        setUser(user);
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } catch (error) {
-      console.error('Error setting up auth listener:', error);
-      setLoading(false);
+    // Check for persisted auth state
+    const persistedUser = localStorage.getItem('soulsync_user');
+    const persistedRole = localStorage.getItem('soulsync_role');
+    
+    if (persistedUser && persistedRole) {
+      try {
+        const userData = JSON.parse(persistedUser);
+        setUser(userData);
+        setUserRole(persistedRole as UserRole);
+        console.log('Restored user session:', userData.email, persistedRole);
+      } catch (error) {
+        console.error('Error parsing persisted user:', error);
+        localStorage.removeItem('soulsync_user');
+        localStorage.removeItem('soulsync_role');
+      }
     }
+    
+    setLoading(false);
   }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithSupabase = async (email: string, password: string) => {
     try {
-      // Configure the Google provider with additional scopes if needed
-      googleProvider.addScope('profile');
-      googleProvider.addScope('email');
+      setLoading(true);
       
-      const result = await signInWithPopup(auth, googleProvider);
-      // The signed-in user info is available in result.user
-      console.log('User signed in:', result.user);
+      console.log('Attempting to sign in with:', { email, password });
+      
+      // Use the helper function that bypasses RLS
+      const userData = await authenticateUser(email, password);
+      
+      console.log('Authentication result:', { userData, hasUser: !!userData });
+
+      if (!userData) {
+        console.error('No matching user found for credentials');
+        throw new Error('Invalid email or password');
+      }
+
+      // Create a user object for session management
+      const userObject = {
+        uid: `supabase_${userData.id}`,
+        email: userData.email,
+        displayName: userData.role,
+      } as User;
+
+      // Persist authentication state
+      localStorage.setItem('soulsync_user', JSON.stringify(userObject));
+      localStorage.setItem('soulsync_role', userData.role);
+
+      setUser(userObject);
+      setUserRole(userData.role);
+      
+      console.log('User signed in with role:', userData.role);
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.error('Error signing in:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
-      await firebaseSignOut(auth);
+      // Clear persisted authentication state
+      localStorage.removeItem('soulsync_user');
+      localStorage.removeItem('soulsync_role');
+      
+      // Clear local state
+      setUser(null);
+      setUserRole(null);
+      
+      // Also sign out from Firebase (though we may not have a real Firebase user)
+      try {
+        await firebaseSignOut(auth);
+      } catch (firebaseError) {
+        // Ignore Firebase signout errors since we use a hybrid system
+        console.log('Firebase signout skipped (hybrid auth)');
+      }
+      
+      console.log('User signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
@@ -82,8 +133,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value = {
     user,
+    userRole,
     loading,
-    signInWithGoogle,
+    signInWithSupabase,
     signOut
   };
 

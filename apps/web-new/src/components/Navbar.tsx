@@ -1,15 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { ChatBubbleLeftIcon, UserIcon, HomeIcon, InformationCircleIcon, PhoneIcon, ClipboardDocumentCheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { useSafeAuth } from '../contexts/useSafeAuth';
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading, signInWithGoogle, signOut } = useSafeAuth();
+  const { user, loading, signOut } = useSafeAuth();
 
   const handleSignOut = async () => {
     try {
@@ -20,163 +17,327 @@ export default function Navbar() {
     }
   };
 
-  const handleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.error('Error signing in:', error);
-    }
-  };
-
   // Don't show navbar on signin page
   if (pathname === '/signin') {
     return null;
   }
 
   return (
-    <motion.nav 
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-between px-6 py-3 rounded-2xl shadow-2xl bg-white/80 backdrop-blur-md border border-white/20 w-[95%] max-w-6xl"
-    >
-      <Link href={user ? '/dashboard' : '/'}>
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center space-x-2"
+    <nav style={{
+      backgroundColor: 'white',
+      padding: '16px 0',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      position: 'sticky',
+      top: 0,
+      zIndex: 100
+    }}>
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0 20px'
+      }}>
+        {/* Logo/Brand */}
+        <div 
+          onClick={() => router.push('/')}
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}
         >
-          <motion.img 
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ repeat: Infinity, duration: 4 }}
-            src="/soulsync-logo.svg"
-            alt="SoulSync"
-            className="w-8 h-8"
-          />
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent cursor-pointer">
-            SoulSync
-          </h1>
-        </motion.div>
-      </Link>
-      
-      <div className="flex items-center space-x-4">
-        {/* Always available links */}
-        <NavLink href="/screening" icon={ClipboardDocumentCheckIcon}>Screening</NavLink>
-        <NavLink href="/resources" icon={InformationCircleIcon}>Resources</NavLink>
-        <NavLink href="/helplines" icon={PhoneIcon}>Helplines</NavLink>
-        
-        {/* Loading state */}
-        {loading && (
-          <motion.div 
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
-            className="text-gray-500 text-sm"
-          >
-            Loading...
-          </motion.div>
-        )}
-        
-        {/* Authenticated user links */}
-        {!loading && user && (
-          <>
-            <NavLink href="/dashboard" icon={HomeIcon}>Dashboard</NavLink>
-            <NavLink href="/prompt" icon={ChatBubbleLeftIcon} highlight>Chat</NavLink>
-            
-            <div className="flex items-center space-x-3">
-              <motion.div 
-                whileHover={{ scale: 1.05 }}
-                className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-full"
-              >
-                <div className="w-6 h-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
-                  <UserIcon className="w-3 h-3 text-white" />
-                </div>
-                <span className="text-xs text-green-700 font-medium">
-                  {user.email?.split('@')[0] || 'User'}
-                </span>
-              </motion.div>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleSignOut}
-                className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full text-sm font-medium shadow-lg hover:shadow-xl transition-shadow"
-              >
-                Sign Out
-              </motion.button>
-            </div>
-          </>
-        )}
-        
-        {/* Unauthenticated user */}
-        {!loading && !user && (
-          <div className="flex items-center space-x-2">
-            <NavLink href="/prompt" icon={ChatBubbleLeftIcon} highlight isLimited>
-              Try Chat
-            </NavLink>
-            <motion.div 
-              className="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-full"
-            >
-              <span className="text-xs text-yellow-700 font-medium">
-                👋 Guest Mode
-              </span>
-            </motion.div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSignIn}
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full text-sm font-medium shadow-lg hover:shadow-xl transition-shadow"
-            >
-              📧 Sign in with Google
-            </motion.button>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontWeight: '700',
+            fontSize: '18px'
+          }}>
+            SS
           </div>
-        )}
-      </div>
-    </motion.nav>
-  );
-}
+          <span style={{
+            fontWeight: '700',
+            fontSize: '24px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            color: 'transparent',
+            fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+          }}>
+            SoulSync
+          </span>
+        </div>
 
-// NavLink component for cleaner code
-function NavLink({ 
-  href, 
-  children, 
-  icon: Icon, 
-  highlight = false,
-  isLimited = false,
-  urgent = false
-}: { 
-  href: string; 
-  children: React.ReactNode; 
-  icon: any; 
-  highlight?: boolean;
-  isLimited?: boolean;
-  urgent?: boolean;
-}) {
-  return (
-    <Link href={href}>
-      <motion.div
-        whileHover={{ scale: 1.05, y: -2 }}
-        whileTap={{ scale: 0.95 }}
-        className={`flex items-center space-x-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all relative ${
-          urgent
-            ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-700 shadow-md border border-red-300'
-            : highlight 
-            ? isLimited
-              ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700 shadow-md'
-              : 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 shadow-md' 
-            : 'hover:bg-gray-50 text-gray-700 hover:text-blue-600'
-        }`}
-      >
-        <Icon className="w-4 h-4" />
-        <span>{children}</span>
-        {isLimited && (
-          <span className="text-xs bg-yellow-400 text-yellow-900 px-1 rounded-full">3</span>
-        )}
-        {urgent && (
-          <motion.div
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
-          />
-        )}
-      </motion.div>
-    </Link>
+        {/* Navigation Links */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          gap: '32px'
+        }}>
+          <div style={{
+            display: 'flex',
+            gap: '24px'
+          }}>
+            <button
+              onClick={() => router.push('/')}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: '500',
+                color: pathname === '/' ? '#667eea' : '#4a5568',
+                textDecoration: 'none',
+                borderBottom: pathname === '/' ? '2px solid #667eea' : '2px solid transparent',
+                transition: 'all 0.2s ease',
+                fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+              }}
+              onMouseEnter={(e) => {
+                if (pathname !== '/') {
+                  e.currentTarget.style.color = '#667eea';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (pathname !== '/') {
+                  e.currentTarget.style.color = '#4a5568';
+                }
+              }}
+            >
+              Home
+            </button>
+
+            <button
+              onClick={() => router.push('/about')}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: '500',
+                color: pathname === '/about' ? '#667eea' : '#4a5568',
+                textDecoration: 'none',
+                borderBottom: pathname === '/about' ? '2px solid #667eea' : '2px solid transparent',
+                transition: 'all 0.2s ease',
+                fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+              }}
+              onMouseEnter={(e) => {
+                if (pathname !== '/about') {
+                  e.currentTarget.style.color = '#667eea';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (pathname !== '/about') {
+                  e.currentTarget.style.color = '#4a5568';
+                }
+              }}
+            >
+              About
+            </button>
+
+            <button
+              onClick={() => router.push('/contact')}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: '500',
+                color: pathname === '/contact' ? '#667eea' : '#4a5568',
+                textDecoration: 'none',
+                borderBottom: pathname === '/contact' ? '2px solid #667eea' : '2px solid transparent',
+                transition: 'all 0.2s ease',
+                fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+              }}
+              onMouseEnter={(e) => {
+                if (pathname !== '/contact') {
+                  e.currentTarget.style.color = '#667eea';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (pathname !== '/contact') {
+                  e.currentTarget.style.color = '#4a5568';
+                }
+              }}
+            >
+              Contact
+            </button>
+
+            {user && (
+              <button
+                onClick={() => router.push('/prompt')}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  color: pathname === '/prompt' ? '#10b981' : '#4a5568',
+                  textDecoration: 'none',
+                  borderBottom: pathname === '/prompt' ? '2px solid #10b981' : '2px solid transparent',
+                  transition: 'all 0.2s ease',
+                  fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+                }}
+                onMouseEnter={(e) => {
+                  if (pathname !== '/prompt') {
+                    e.currentTarget.style.color = '#10b981';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (pathname !== '/prompt') {
+                    e.currentTarget.style.color = '#4a5568';
+                  }
+                }}
+              >
+                AI Chat
+              </button>
+            )}
+
+            {user && (
+              <button
+                onClick={() => router.push('/dashboard')}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  color: pathname === '/dashboard' ? '#667eea' : '#4a5568',
+                  textDecoration: 'none',
+                  borderBottom: pathname === '/dashboard' ? '2px solid #667eea' : '2px solid transparent',
+                  transition: 'all 0.2s ease',
+                  fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+                }}
+                onMouseEnter={(e) => {
+                  if (pathname !== '/dashboard') {
+                    e.currentTarget.style.color = '#667eea';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (pathname !== '/dashboard') {
+                    e.currentTarget.style.color = '#4a5568';
+                  }
+                }}
+              >
+                Dashboard
+              </button>
+            )}
+          </div>
+
+          {/* Auth Section */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            {loading ? (
+              <div style={{
+                padding: '8px 16px',
+                color: '#9ca3af',
+                fontSize: '14px',
+                fontStyle: 'italic'
+              }}>
+                Loading...
+              </div>
+            ) : user ? (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '16px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  backgroundColor: '#f7fafc',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  <div style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}>
+                    {user.email?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                  <span style={{ 
+                    color: '#2d3748', 
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}>
+                    {user.email?.split('@')[0] || 'User'}
+                  </span>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  style={{
+                    backgroundColor: '#f56565',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'background-color 0.2s ease',
+                    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e53e3e'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f56565'}
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => router.push('/signin')}
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
   );
 }

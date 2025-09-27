@@ -120,31 +120,23 @@ export function useLocation(): UseLocationReturn {
 
       const { latitude, longitude, accuracy } = position.coords;
 
-      // Reverse geocode
-      const geoResponse = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
-        {
-          headers: {
-            'User-Agent': 'SoulSync-MentalWellness-App/1.0'
-          }
-        }
-      );
+      // Reverse geocode using server-side API to avoid CORS issues
+      const geoResponse = await fetch('/api/geocode', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          latitude,
+          longitude,
+        }),
+      });
 
       if (!geoResponse.ok) {
         throw new Error('Failed to get location details');
       }
 
-      const geoData = await geoResponse.json();
-      const address = geoData.address || {};
-
-      const locationData: LocationData = {
-        country: address.country || 'Unknown',
-        state: address.state || address.region || address.province || 'Unknown',
-        city: address.city || address.town || address.village || address.municipality || 'Unknown',
-        latitude,
-        longitude,
-        accuracy
-      };
+      const locationData = await geoResponse.json();
 
       // Auto-save if user is logged in
       if (user) {

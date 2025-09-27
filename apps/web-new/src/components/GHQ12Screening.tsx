@@ -223,30 +223,61 @@ export default function GHQ12Screening({
   const progress = ((currentQuestion + 1) / 12) * 100;
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
+    <div style={{
+      maxWidth: '672px',
+      margin: '0 auto',
+      padding: '24px'
+    }}>
       {/* Header */}
-      <div className="text-center mb-8">
+      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
         <AnimatedFace 
           expression="neutral" 
           thinking={characterThinking || isSubmitting}
         />
-        <h2 className="text-3xl font-bold text-gray-800 mb-2 mt-4">
+        <h2 style={{
+          fontSize: '30px',
+          fontWeight: 'bold',
+          color: '#1f2937',
+          marginBottom: '8px',
+          marginTop: '16px',
+          fontFamily: 'system-ui, -apple-system, sans-serif'
+        }}>
           GHQ-12 General Health Assessment
         </h2>
-        <p className="text-gray-600">
+        <p style={{
+          color: '#6b7280',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          fontSize: '16px'
+        }}>
           Please think about how you have been feeling over the past few weeks
         </p>
       </div>
 
       {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
+      <div style={{ marginBottom: '32px' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: '14px',
+          color: '#6b7280',
+          marginBottom: '8px',
+          fontFamily: 'system-ui, -apple-system, sans-serif'
+        }}>
           <span>Question {currentQuestion + 1} of 12</span>
           <span>{Math.round(progress)}% Complete</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div style={{
+          width: '100%',
+          backgroundColor: '#e5e7eb',
+          borderRadius: '9999px',
+          height: '8px'
+        }}>
           <motion.div
-            className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full"
+            style={{
+              background: 'linear-gradient(to right, #22c55e, #3b82f6)',
+              height: '8px',
+              borderRadius: '9999px'
+            }}
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}
@@ -262,33 +293,89 @@ export default function GHQ12Screening({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -50 }}
           transition={{ duration: 0.3 }}
-          className="mb-8"
+          style={{ marginBottom: '32px' }}
         >
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h3 className="text-xl font-semibold text-gray-800 mb-6 leading-relaxed">
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            padding: '32px'
+          }}>
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#1f2937',
+              marginBottom: '24px',
+              lineHeight: '1.6',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}>
               {getQuestionText(GHQ12_QUESTIONS[currentQuestion])}
             </h3>
 
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {ANSWER_OPTIONS.map((option) => (
                 <motion.button
                   key={option.value}
                   onClick={() => handleAnswer(option.value)}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
-                    answers[currentQuestion] === option.value
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-200 hover:border-green-300 hover:bg-gray-50'
-                  }`}
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    textAlign: 'left',
+                    borderRadius: '8px',
+                    border: answers[currentQuestion] === option.value 
+                      ? '2px solid #22c55e' 
+                      : '2px solid #e5e7eb',
+                    backgroundColor: answers[currentQuestion] === option.value 
+                      ? '#f0fdf4' 
+                      : 'white',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                  }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
+                  onMouseEnter={(e) => {
+                    if (answers[currentQuestion] !== option.value) {
+                      e.currentTarget.style.borderColor = '#86efac';
+                      e.currentTarget.style.backgroundColor = '#f9fafb';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (answers[currentQuestion] !== option.value) {
+                      e.currentTarget.style.borderColor = '#e5e7eb';
+                      e.currentTarget.style.backgroundColor = 'white';
+                    }
+                  }}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-800">{getOptionLabel(option)}</span>
-                    <div className={`w-4 h-4 rounded-full border-2 ${
-                      answers[currentQuestion] === option.value
-                        ? 'border-green-500 bg-green-500'
-                        : 'border-gray-300'
-                    }`} />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#1f2937', fontSize: '16px' }}>{getOptionLabel(option)}</span>
+                    <div style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      border: answers[currentQuestion] === option.value
+                        ? '2px solid #22c55e'
+                        : '2px solid #d1d5db',
+                      backgroundColor: answers[currentQuestion] === option.value
+                        ? '#22c55e'
+                        : 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {answers[currentQuestion] === option.value && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            backgroundColor: 'white',
+                            borderRadius: '50%'
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
                 </motion.button>
               ))}
@@ -298,11 +385,31 @@ export default function GHQ12Screening({
       </AnimatePresence>
 
       {/* Navigation */}
-      <div className="flex justify-between items-center">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button
           onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
           disabled={currentQuestion === 0}
-          className="px-6 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            padding: '8px 24px',
+            color: '#6b7280',
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: currentQuestion === 0 ? 'not-allowed' : 'pointer',
+            opacity: currentQuestion === 0 ? 0.5 : 1,
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontSize: '14px',
+            transition: 'color 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            if (currentQuestion !== 0) {
+              e.currentTarget.style.color = '#1f2937';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (currentQuestion !== 0) {
+              e.currentTarget.style.color = '#6b7280';
+            }
+          }}
         >
           ← Previous
         </button>
@@ -311,7 +418,29 @@ export default function GHQ12Screening({
           <button
             onClick={() => setCurrentQuestion(currentQuestion + 1)}
             disabled={answers[currentQuestion] === -1}
-            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#22c55e',
+              color: 'white',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: answers[currentQuestion] === -1 ? 'not-allowed' : 'pointer',
+              opacity: answers[currentQuestion] === -1 ? 0.5 : 1,
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (answers[currentQuestion] !== -1) {
+                e.currentTarget.style.backgroundColor = '#16a34a';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (answers[currentQuestion] !== -1) {
+                e.currentTarget.style.backgroundColor = '#22c55e';
+              }
+            }}
           >
             Next →
           </button>
@@ -319,11 +448,40 @@ export default function GHQ12Screening({
           <button
             onClick={handleSubmit}
             disabled={!canSubmit || isSubmitting}
-            className="px-8 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            style={{
+              padding: '12px 32px',
+              background: 'linear-gradient(to right, #22c55e, #3b82f6)',
+              color: 'white',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: (!canSubmit || isSubmitting) ? 'not-allowed' : 'pointer',
+              opacity: (!canSubmit || isSubmitting) ? 0.5 : 1,
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (canSubmit && !isSubmitting) {
+                e.currentTarget.style.background = 'linear-gradient(to right, #16a34a, #2563eb)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (canSubmit && !isSubmitting) {
+                e.currentTarget.style.background = 'linear-gradient(to right, #22c55e, #3b82f6)';
+              }
+            }}
           >
             {isSubmitting ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid white',
+                  borderTop: '2px solid transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
                 Processing...
               </div>
             ) : (
@@ -335,10 +493,24 @@ export default function GHQ12Screening({
 
       {/* Cancel Button */}
       {onCancel && (
-        <div className="text-center mt-6">
+        <div style={{ textAlign: 'center', marginTop: '24px' }}>
           <button
             onClick={onCancel}
-            className="text-gray-500 hover:text-gray-700 text-sm"
+            style={{
+              color: '#6b7280',
+              backgroundColor: 'transparent',
+              border: 'none',
+              fontSize: '14px',
+              cursor: 'pointer',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              transition: 'color 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#374151';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#6b7280';
+            }}
           >
             Cancel Assessment
           </button>

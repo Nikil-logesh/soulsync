@@ -15,428 +15,300 @@ interface UserContext {
 
 export class AIService {
   private apiKey: string;
+  private modelName: string;
   private conversationHistory: Array<{userPrompt: string, aiResponse: string, timestamp: Date}> = [];
   
   constructor() {
     // Get API key from environment or use hardcoded for now (should be restricted by domain)
-    this.apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyDapjfkIhzytwTUKubTJNYeE3gZx0398tw';
-    console.log('AI Service initialized with API key:', this.apiKey ? 'Found' : 'Not found');
+    this.apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyBIH0iIv31peP2p2iChW03Mqx53f0ZzUOw';
+    this.modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-2.0-flash';
+    console.log('🔧 AI Service Debug Info:');
+    console.log('Environment API Key:', process.env.NEXT_PUBLIC_GEMINI_API_KEY ? `${process.env.NEXT_PUBLIC_GEMINI_API_KEY.substring(0, 10)}...${process.env.NEXT_PUBLIC_GEMINI_API_KEY.substring(-4)}` : 'NOT FOUND');
+    console.log('Final API Key Used:', this.apiKey ? `${this.apiKey.substring(0, 10)}...${this.apiKey.substring(this.apiKey.length-4)}` : 'Not found');
+    console.log('Using model:', this.modelName);
   }
   
   async generateResponse(userPrompt: string, context: UserContext = {}): Promise<AIResponse> {
-    console.log('Generating AI response for:', userPrompt);
-    console.log('Using API key:', this.apiKey ? 'Available' : 'Missing');
-    console.log('User context:', context);
+    console.log('🗣️ Generating AI response for:', userPrompt);
+    console.log('🌍 Location detected:', context.location);
+    console.log('🗣️ Language detected:', context.language);
+    console.log('📱 Full context:', context);
     
-    // Always try the API first
+    // Check for crisis situations first
+    if (this.detectCrisis(userPrompt)) {
+      return {
+        action: "popup",
+        message: "I notice you might be going through a really difficult time right now. Your safety and wellbeing are the top priority. Please consider reaching out to a mental health professional or crisis hotline immediately.",
+        severity: "crisis",
+        resources: [
+          "National Suicide Prevention Lifeline: 988",
+          "Crisis Text Line: Text HOME to 741741",
+          "International Association for Suicide Prevention: https://www.iasp.info/resources/Crisis_Centres/"
+        ]
+      };
+    }
+
+    // Try to use AI API first, fallback to enhanced CBT responses if it fails
     try {
-      const systemPrompt = this.buildSystemPrompt(context);
-      const fullPrompt = `${systemPrompt}\n\nUser: ${userPrompt}\n\nAI:`;
+      return await this.generateAIResponse(userPrompt, context);
+    } catch (error) {
+      console.error('AI API failed, using enhanced CBT responses:', error);
       
-      console.log('Making API request to Gemini...');
-      
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: fullPrompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          },
-          safetySettings: [
-            {
-              category: "HARM_CATEGORY_HARASSMENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_HATE_SPEECH", 
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            }
-          ]
-        })
-      });
-      
-      console.log('API Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`API error: ${response.status} - ${errorText}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Rate limit exceeded')) {
+        console.log('⚡ Flash model rate limit hit - switching to enhanced CBT intelligence');
+      } else if (errorMessage.includes('access denied')) {
+        console.log('🔐 API access issue - using secure CBT responses');
+      } else {
+        console.log('🔄 API temporarily unavailable - using enhanced CBT fallback system');
       }
       
+      console.log('✅ Users get CBT-based, culturally-aware therapeutic responses');
+      return this.generateEnhancedResponse(userPrompt, context);
+    }
+  }
+
+  private async generateAIResponse(userPrompt: string, context: UserContext): Promise<AIResponse> {
+    const { location, language = 'en-US', age, guestMode = false } = context;
+    
+    // Analyze concern type for context
+    const concernType = this.analyzeConcernType(userPrompt);
+    
+    // Create contextual prompt for AI
+    const systemPrompt = this.createSystemPrompt(concernType, context);
+    const fullPrompt = `${systemPrompt}\n\nUser: ${userPrompt}`;
+
+    try {
+      console.log('Making API request to Gemini with model:', this.modelName);
+      
+      // Try multiple API endpoint versions (v1beta is the correct one for Gemini)
+      const apiEndpoints = [
+        `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent?key=${this.apiKey}`,
+      ];
+      
+      let response: Response | null = null;
+      let lastError: any = null;
+      
+      for (const apiUrl of apiEndpoints) {
+        try {
+          console.log('Trying API URL:', apiUrl.replace(this.apiKey, '[API_KEY_HIDDEN]'));
+          
+          response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: fullPrompt
+                }]
+              }],
+              generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 1000,
+              },
+              safetySettings: [
+                {
+                  category: "HARM_CATEGORY_HARASSMENT",
+                  threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                  category: "HARM_CATEGORY_HATE_SPEECH", 
+                  threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                  category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                  threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                  category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                  threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                }
+              ]
+            })
+          });
+
+          if (response.ok) {
+            console.log('Successfully connected to:', apiUrl.replace(this.apiKey, '[API_KEY_HIDDEN]'));
+            break; // Success, exit the loop
+          } else if (response.status === 429) {
+            console.log('Rate limit exceeded (429). Using enhanced fallback responses.');
+            lastError = new Error('Rate limit exceeded - using intelligent fallback responses');
+          } else if (response.status === 403) {
+            console.log('API key access denied (403). Check API key permissions.');
+            lastError = new Error('API key access denied - using intelligent fallback responses');
+          } else {
+            console.log(`API endpoint failed with status ${response.status}:`, apiUrl.replace(this.apiKey, '[API_KEY_HIDDEN]'));
+            lastError = new Error(`API request failed: ${response.status} ${response.statusText}`);
+          }
+        } catch (endpointError) {
+          console.log('Endpoint error:', endpointError);
+          lastError = endpointError;
+          response = null;
+        }
+      }
+
+      if (!response || !response.ok) {
+        throw lastError || new Error('All API endpoints failed');
+      }
+
       const data = await response.json();
-      console.log('API Response data:', data);
       
-      const aiMessage = data.candidates?.[0]?.content?.parts?.[0]?.text || 'I apologize, but I encountered an issue generating a response.';
-      
-      console.log('Generated AI message:', aiMessage);
-      
-      // Store in conversation memory to avoid repetition
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        throw new Error('Invalid API response structure');
+      }
+
+      const aiMessage = data.candidates[0].content.parts[0].text;
+
+      // Store in conversation history
       this.conversationHistory.push({
         userPrompt,
         aiResponse: aiMessage,
         timestamp: new Date()
       });
-      
-      // Keep only last 10 conversations
-      if (this.conversationHistory.length > 10) {
-        this.conversationHistory = this.conversationHistory.slice(-10);
-      }
-      
-      // Check for crisis indicators
-      if (this.detectCrisis(userPrompt)) {
-        return {
-          action: "popup",
-          message: "I'm concerned about your safety. Please reach out for immediate help:",
-          resources: [
-            "National Suicide Prevention Lifeline: 988",
-            "Tele MANAS (India): 14416", 
-            "Crisis Text Line: Text HOME to 741741",
-            "Emergency Services: 911/108"
-          ]
-        };
-      }
-      
+
       return {
         action: "response",
         message: aiMessage,
         severity: this.assessSeverity(userPrompt)
       };
-      
+
     } catch (error) {
-      console.error('AI API Error:', error);
-      console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
-      // Fallback to basic responses on error
-      console.log('Falling back to basic responses...');
-      return this.generateBasicResponse(userPrompt, context);
+      console.error('Gemini API error:', error);
+      throw error; // Re-throw to trigger fallback
     }
   }
-  
-  private buildSystemPrompt(context: UserContext): string {
-    const { location, language = 'en-US', age, guestMode = false } = context;
+
+  private createSystemPrompt(concernType: string, context: UserContext): string {
+    const { language = 'en-US', age, location } = context;
     
-    // Language mapping for response language
-    const languageMap: Record<string, { name: string, code: string, greeting: string, cbtTerms: any }> = {
-      'en-US': { 
-        name: 'English', 
-        code: 'en-US',
-        greeting: 'Hello',
-        cbtTerms: {
-          thoughts: 'thoughts',
-          feelings: 'feelings', 
-          behaviors: 'behaviors',
-          mindfulness: 'mindfulness',
-          gratitude: 'gratitude'
-        }
-      },
-      'en-GB': { 
-        name: 'English', 
-        code: 'en-GB',
-        greeting: 'Hello',
-        cbtTerms: {
-          thoughts: 'thoughts',
-          feelings: 'feelings',
-          behaviors: 'behaviours', 
-          mindfulness: 'mindfulness',
-          gratitude: 'gratitude'
-        }
-      },
-      'hi-IN': { 
-        name: 'Hindi', 
-        code: 'hi-IN',
-        greeting: 'नमस्ते',
-        cbtTerms: {
-          thoughts: 'विचार',
-          feelings: 'भावनाएं',
-          behaviors: 'व्यवहार',
-          mindfulness: 'दिमागीपन',
-          gratitude: 'कृतज्ञता'
-        }
-      },
-      'ta-IN': { 
-        name: 'Tamil', 
-        code: 'ta-IN',
-        greeting: 'வணக்கம்',
-        cbtTerms: {
-          thoughts: 'எண்ணங்கள்',
-          feelings: 'உணர்வுகள்',
-          behaviors: 'நடத்தைகள்',
-          mindfulness: 'நினைவாற்றல்',
-          gratitude: 'நன்றியுணர்வு'
-        }
-      },
-      'te-IN': { 
-        name: 'Telugu', 
-        code: 'te-IN',
-        greeting: 'నమస్కారం',
-        cbtTerms: {
-          thoughts: 'ఆలోచనలు',
-          feelings: 'భావనలు',
-          behaviors: 'ప్రవర్తనలు',
-          mindfulness: 'మనస్సుపూర్వకత',
-          gratitude: 'కృతజ్ఞత'
-        }
-      },
-      'kn-IN': { 
-        name: 'Kannada', 
-        code: 'kn-IN',
-        greeting: 'ನಮಸ್ಕಾರ',
-        cbtTerms: {
-          thoughts: 'ಆಲೋಚನೆಗಳು',
-          feelings: 'ಭಾವನೆಗಳು',
-          behaviors: 'ನಡವಳಿಕೆಗಳು',
-          mindfulness: 'ಮನಃಪೂರ್ವಕತೆ',
-          gratitude: 'ಕೃತಜ್ಞತೆ'
-        }
-      },
-      'ml-IN': { 
-        name: 'Malayalam', 
-        code: 'ml-IN',
-        greeting: 'നമസ്കാരം',
-        cbtTerms: {
-          thoughts: 'ചിന്തകൾ',
-          feelings: 'വികാരങ്ങൾ',
-          behaviors: 'പെരുമാറ്റങ്ങൾ',
-          mindfulness: 'മനഃസാന്നിധ്യം',
-          gratitude: 'കൃതജ്ഞത'
-        }
-      },
-      'bn-IN': { 
-        name: 'Bengali', 
-        code: 'bn-IN',
-        greeting: 'নমস্কার',
-        cbtTerms: {
-          thoughts: 'চিন্তাভাবনা',
-          feelings: 'অনুভূতি',
-          behaviors: 'আচরণ',
-          mindfulness: 'মননশীলতা',
-          gratitude: 'কৃতজ্ঞতা'
-        }
-      },
-      'gu-IN': { 
-        name: 'Gujarati', 
-        code: 'gu-IN',
-        greeting: 'નમસ્તે',
-        cbtTerms: {
-          thoughts: 'વિચારો',
-          feelings: 'લાગણીઓ',
-          behaviors: 'વર્તણૂકો',
-          mindfulness: 'સાવધાનતા',
-          gratitude: 'કૃતજ્ઞતા'
-        }
-      },
-      'mr-IN': { 
-        name: 'Marathi', 
-        code: 'mr-IN',
-        greeting: 'नमस्कार',
-        cbtTerms: {
-          thoughts: 'विचार',
-          feelings: 'भावना',
-          behaviors: 'वर्तन',
-          mindfulness: 'जागरूकता',
-          gratitude: 'कृतज्ञता'
-        }
-      }
+    // Enhanced cultural and regional context
+    const culturalContext = this.getCulturalContext(location, language);
+    
+    let systemPrompt = `You are a compassionate, professionally trained mental health support assistant specializing in culturally sensitive care. Your responses should be:
+
+1. Empathetic and validating of the user's feelings
+2. Based on evidence-based therapeutic approaches (CBT, mindfulness, etc.)
+3. Culturally sensitive and age-appropriate for their specific region
+4. Focused on providing practical coping strategies
+5. Encouraging professional help when appropriate
+6. Respectful of cultural, religious, and social contexts
+
+User Context:
+- Concern Type: ${concernType}
+- Language: ${language}
+- Age: ${age || 'Not specified'}
+- Cultural Context: ${culturalContext}
+
+IMPORTANT: Never mention the user's location explicitly in your response. Use cultural context to provide relevant suggestions silently.
+
+Specific Guidelines for ${concernType}:`;
+
+    const guidelines: Record<string, string> = {
+      'exam-anxiety': 'Focus on academic stress management, study techniques, and exam preparation strategies. Acknowledge the pressure students face while providing practical anxiety management tools.',
+      'academic-stress': 'Address study-related stress with time management techniques, workload management, and academic coping strategies. Emphasize that academic struggles don\'t define worth.',
+      'academic-general': 'Provide balanced academic support focusing on both educational goals and mental health. Include study tips and stress management.',
+      'anxiety': 'Use proven anxiety management techniques like grounding exercises, breathing techniques, and cognitive restructuring. Be validating and reassuring.',
+      'depression': 'Be extra empathetic. Focus on small, manageable steps and encourage professional support. Avoid toxic positivity.',
+      'stress': 'Provide stress management techniques, lifestyle adjustments, and coping strategies. Focus on building resilience.',
+      'general': 'Be supportive and ask clarifying questions if needed. Provide general mental health support and validation.'
     };
 
-    const langInfo = languageMap[language] || languageMap['en-US'];
-    
-    // Age-based customization
-    let ageContext = '';
-    if (age) {
-      if (age >= 13 && age <= 17) {
-        ageContext = `
-AGE CONTEXT: You're speaking with a teenager (${age} years old). Use relatable language about school stress, peer pressure, identity exploration, academic pressure, family expectations, and future planning. Reference age-appropriate coping strategies and emphasize that seeking help is normal and brave.`;
-      } else if (age >= 18 && age <= 25) {
-        ageContext = `
-AGE CONTEXT: You're speaking with a young adult (${age} years old). Address concerns about college, career choices, independence, relationships, financial stress, future uncertainty, and finding one's path. Use mature but supportive language.`;
-      } else if (age >= 26 && age <= 35) {
-        ageContext = `
-AGE CONTEXT: You're speaking with a young professional (${age} years old). Address work-life balance, career growth, relationships, marriage pressures, family planning decisions, financial responsibilities, and establishing independence.`;
-      } else if (age > 35) {
-        ageContext = `
-AGE CONTEXT: You're speaking with an adult (${age} years old). Address career transitions, family responsibilities, aging parents, health concerns, life purpose, and long-term planning. Use respectful, mature language.`;
-      }
+    systemPrompt += guidelines[concernType] || guidelines['general'];
+
+    // Add cultural and language-specific guidance
+    const culturalGuidance = this.getCulturalGuidance(location, language);
+    if (culturalGuidance) {
+      systemPrompt += `\n\nCultural Considerations: ${culturalGuidance}`;
     }
 
-    let prompt = `You are SoulSync, a highly personalized AI mental health companion. Provide UNIQUE, NON-REPETITIVE responses based on the specific user context.
+    systemPrompt += '\n\nAlways end with practical, actionable advice. Keep response length reasonable (200-400 words). If the situation seems serious, gently encourage professional help.';
 
-CRITICAL: AVOID GENERIC RESPONSES. Each response must be DIFFERENT and SPECIFIC to the user's exact situation.
-
-🌍 LANGUAGE & CULTURAL ADAPTATION:
-- Respond primarily in ${langInfo.name} (${langInfo.code})
-- Use "${langInfo.greeting}" as a warm, personal greeting
-- NEVER repeat the same phrases - vary your language each time
-- Include specific cultural references relevant to the user's background
-
-🧠 THERAPEUTIC APPROACH:
-Integrate CBT techniques NATURALLY into your response without labels:
-- Help identify SPECIFIC negative thought patterns naturally in conversation
-- Address EXACT emotions mentioned by the user
-- Suggest CONCRETE actionable steps that feel like friendly advice
-- Provide BRIEF mindfulness exercises (30 seconds max) as natural suggestions
-- Ask about gratitude in a conversational way
-
-RESPONSE STYLE - NATURAL INTEGRATION:
-Write ONE flowing, conversational response that naturally includes:
-1. Personal acknowledgment of their specific concern
-2. Practical advice that happens to use CBT principles (NO LABELS)
-3. Culturally relevant suggestions woven into the conversation
-4. One thoughtful follow-up question
-
-IMPORTANT: NO TECHNICAL LABELS like "CBT Technique" or "Cultural Coping Strategy"
-- Just give advice naturally like a wise, culturally-aware friend would
-- Make therapeutic techniques feel like everyday wisdom
-- Blend cultural suggestions seamlessly into the conversation
-
-MAKE EVERY RESPONSE UNIQUE BY:
-- Using different opening phrases each time
-- Providing different CBT techniques
-- Varying the cultural references
-- Asking different types of questions
-- Changing the tone slightly (while remaining supportive)`;
-
-    // Add very specific age-based context
-    if (age) {
-      if (age >= 13 && age <= 17) {
-        prompt += `\n\n🎓 TEEN CONTEXT (${age} years): 
-- Address: Board exam pressure, coaching classes, parent expectations, peer comparison
-- Reference: School friend groups, social media stress, career confusion, body image
-- Suggest: Study breaks, talking to school counselor, time with friends
-- Cultural: Respect for parents while asserting independence, academic competition in India`;
-      } else if (age >= 18 && age <= 25) {
-        prompt += `\n\n🎓 YOUNG ADULT CONTEXT (${age} years):
-- Address: College admission, JEE/NEET stress, relationship issues, future uncertainty
-- Reference: Campus life, hostel problems, first job anxiety, marriage pressure
-- Suggest: Career counseling, joining clubs, internships, skill development
-- Cultural: Balancing modern aspirations with family traditions, financial independence`;
-      } else if (age >= 26 && age <= 35) {
-        prompt += `\n\n💼 PROFESSIONAL CONTEXT (${age} years):
-- Address: Work pressure, promotion anxiety, marriage decisions, EMI stress
-- Reference: Corporate culture, work-life balance, buying home, starting family
-- Suggest: Weekend hobbies, exercise routine, financial planning, couple counseling
-- Cultural: Joint family responsibilities, caring for aging parents, societal expectations`;
-      } else if (age > 35) {
-        prompt += `\n\n🌟 MATURE ADULT CONTEXT (${age} years):
-- Address: Mid-life transitions, children's education, health concerns, career stagnation
-- Reference: Property investments, retirement planning, family obligations, health checkups
-- Suggest: Regular exercise, hobby classes, spiritual practices, family time
-- Cultural: Elder care duties, mentoring younger family members, community involvement`;
-      }
-    }
-
-    // Add very specific location and cultural context
-    if (location && !guestMode) {
-      const country = location.country || 'India';
-      const state = location.state || '';
-      const city = location.city || '';
-      
-      prompt += `\n\n📍 LOCATION CONTEXT: ${city ? city + ', ' : ''}${state ? state + ', ' : ''}${country}`;
-      
-      if (country.toLowerCase() === 'india') {
-        // Add state-specific context
-        if (state.toLowerCase().includes('maharashtra')) {
-          prompt += `\n🏙️ MAHARASHTRA CONTEXT: Reference Mumbai's fast-paced life, Pune's IT culture, local festivals like Ganpati, vada pav breaks, local trains stress, Marathi cultural values`;
-        } else if (state.toLowerCase().includes('karnataka')) {
-          prompt += `\n🏙️ KARNATAKA CONTEXT: Reference Bangalore's tech industry, traffic issues, filter coffee culture, Mysore traditions, Kannada pride, garden city lifestyle`;
-        } else if (state.toLowerCase().includes('tamil')) {
-          prompt += `\n🏙️ TAMIL NADU CONTEXT: Reference Chennai's heat, temple visits, classical music/dance, Tamil literature, filter coffee, family traditions, education importance`;
-        } else if (state.toLowerCase().includes('kerala')) {
-          prompt += `\n🏙️ KERALA CONTEXT: Reference backwaters peace, Ayurveda practices, coconut-based food, monsoon blues, literacy pride, boat races, spice gardens`;
-        } else if (state.toLowerCase().includes('delhi')) {
-          prompt += `\n🏙️ DELHI CONTEXT: Reference metro travel, pollution concerns, historical monuments, street food, competitive job market, winter fog, cultural diversity`;
-        } else if (state.toLowerCase().includes('gujarat')) {
-          prompt += `\n🏙️ GUJARAT CONTEXT: Reference business culture, vegetarian lifestyle, Navratri celebrations, entrepreneurial spirit, Gujarati thali, joint family values`;
-        } else if (state.toLowerCase().includes('west bengal')) {
-          prompt += `\n🏙️ WEST BENGAL CONTEXT: Reference intellectual discussions, fish-rice culture, Durga Puja, adda sessions, artistic heritage, sweet tooth, cultural festivals`;
-        } else {
-          prompt += `\n🇮🇳 GENERAL INDIAN CONTEXT: Reference local festivals, family gatherings, street food, monsoon seasons, cricket matches, Bollywood, spiritual practices`;
-        }
-        
-        prompt += `\n\n🕉️ INDIAN CULTURAL ELEMENTS TO INCLUDE:
-- Traditional practices: yoga, meditation, pranayama, Ayurveda
-- Family dynamics: respect for elders, joint family decisions, arranged marriages
-- Festivals & celebrations: local festivals, religious observances, community gatherings
-- Food culture: comfort foods, regional specialties, home-cooked meals
-- Social aspects: neighborhood connections, extended family support, community harmony
-- Modern challenges: work pressure, urban lifestyle, changing values, technology balance`;
-      }
-    }
-    
-    if (guestMode) {
-      prompt += `\n\n👤 GUEST MODE: Provide helpful CBT-based advice but mention SoulSync's full features require sign-up.`;
-    }
-    
-    // Add conversation memory to avoid repetition
-    if (this.conversationHistory.length > 0) {
-      const recentResponses = this.conversationHistory.slice(-3).map(h => h.aiResponse);
-      prompt += `\n\n🔄 AVOID REPETITION: You previously responded with these patterns: ${recentResponses.join(' | ')}. 
-      Make this response COMPLETELY DIFFERENT in tone, approach, and specific advice.`;
-    }
-    
-    prompt += `\n\n⚡ FINAL INSTRUCTION: Create a UNIQUE, PERSONALIZED response. NO generic phrases. Be specific to this exact user and situation.`;
-    
-    return prompt;
+    return systemPrompt;
   }
-  
-  private detectCrisis(prompt: string): boolean {
-    const crisisKeywords = [
-      'suicide', 'kill myself', 'end my life', 'hurt myself', 'self harm', 
-      'die', 'death', 'want to die', 'better off dead', 'no point living'
-    ];
+
+  private getCulturalContext(location: any, language: string): string {
+    if (!location) return 'Global/International context';
     
-    const lowercasePrompt = prompt.toLowerCase();
-    return crisisKeywords.some(keyword => lowercasePrompt.includes(keyword));
+    const country = location.country?.toLowerCase();
+    
+    const culturalContexts: Record<string, string> = {
+      'india': 'Indian cultural context - Consider joint family systems, academic pressure, arranged marriages, religious diversity, respect for elders',
+      'united states': 'American cultural context - Individual achievement focus, diverse backgrounds, work-life balance challenges',
+      'united kingdom': 'British cultural context - Reserved communication style, class considerations, multicultural society',
+      'canada': 'Canadian cultural context - Multicultural inclusivity, healthcare accessibility, seasonal affective considerations',
+      'australia': 'Australian cultural context - Work-life balance, outdoor lifestyle, immigrant integration',
+      'germany': 'German cultural context - Direct communication, work efficiency, structured approaches',
+      'france': 'French cultural context - Intellectual discussions, family meals importance, philosophical approach to life',
+      'japan': 'Japanese cultural context - Harmony maintenance, group consensus, respectful communication, pressure for conformity',
+      'china': 'Chinese cultural context - Family honor, academic achievement pressure, collective responsibility',
+      'brazil': 'Brazilian cultural context - Family-oriented, expressive communication, community support systems',
+      'south africa': 'South African cultural context - Ubuntu philosophy, community healing, diverse cultural backgrounds',
+      'default': 'International context with respect for diverse cultural backgrounds'
+    };
+
+    return culturalContexts[country] || culturalContexts['default'];
   }
-  
-  private assessSeverity(prompt: string): string {
-    const lowercasePrompt = prompt.toLowerCase();
+
+  private getCulturalGuidance(location: any, language: string): string {
+    if (!location) return '';
     
-    const severeKeywords = ['suicide', 'self harm', 'want to die', 'hopeless', 'can\'t go on'];
-    const moderateKeywords = ['depressed', 'anxiety', 'panic', 'overwhelmed', 'stressed'];
+    const country = location.country?.toLowerCase();
+    const state = location.state?.toLowerCase();
     
-    if (severeKeywords.some(keyword => lowercasePrompt.includes(keyword))) {
-      return 'severe';
-    } else if (moderateKeywords.some(keyword => lowercasePrompt.includes(keyword))) {
-      return 'moderate';
+    const guidanceMap: Record<string, string> = {
+      'india': this.getIndianCulturalGuidance(state, language),
+      'united states': 'Address individualistic pressure and achievement culture. Consider work-life balance issues. Be inclusive of diverse backgrounds and immigration stress.',
+      'united kingdom': 'Respect reserved communication preferences. Consider class and social mobility stress. Address seasonal depression common in UK climate.',
+      'canada': 'Consider seasonal affective disorder due to long winters. Address multicultural identity challenges. Be aware of healthcare system accessibility.',
+      'australia': 'Consider isolation from family due to immigration. Address work visa and permanent residency stress. Acknowledge outdoor lifestyle as coping mechanism.',
+      'germany': 'Appreciate direct communication style. Consider work-life balance and efficiency pressure. Address refugee integration challenges if applicable.',
+      'france': 'Respect intellectual and philosophical approach to problems. Consider long lunch culture and work-life separation. Address bureaucratic stress.',
+      'japan': 'Be extremely sensitive to shame and honor concepts. Address work pressure (karoshi culture). Consider group harmony over individual needs. Respect indirect communication.',
+      'china': 'Address family expectations and filial piety pressure. Consider academic competition stress. Be mindful of one-child policy effects on family dynamics.',
+      'brazil': 'Leverage family and community support systems. Consider economic stress and social inequality. Address carnival culture vs daily life balance.',
+      'south africa': 'Consider post-apartheid social dynamics. Address economic inequality stress. Leverage Ubuntu community philosophy for healing.'
+    };
+
+    if (language === 'hi-IN' || country === 'india') {
+      return guidanceMap['india'] + ' Respond in Hindi if user prefers Hindi communication.';
+    }
+
+    return guidanceMap[country] || '';
+  }
+
+  private getIndianCulturalGuidance(state: string, language: string): string {
+    const baseGuidance = 'Consider family dynamics and social expectations. Respect religious and cultural practices. Address academic pressure common in Indian education system. Be mindful of arranged marriage expectations and joint family stress.';
+    
+    if (state && (state.includes('tamil') || state === 'tn')) {
+      return baseGuidance + ' Tamil cultural context: Suggest traditional calming activities like drawing kolam patterns, having filter coffee with family, visiting nearby temples for peace, enjoying evening walks, and connecting with community during festivals. Incorporate concepts of inner peace (அமைதி) and family support (குடும்ப ஆதரவு).';
     }
     
-    return 'mild';
+    return baseGuidance;
   }
-  
+
   private generateBasicResponse(userPrompt: string, context: UserContext): AIResponse {
     const { location, language = 'en-US', age, guestMode = false } = context;
     
-    // Generate context-specific responses based on user details
+    // Analyze prompt content to determine the type of concern
+    const concernType = this.analyzeConcernType(userPrompt);
+    
+    // Generate context-specific responses based on user details and concern type
     const generateContextualResponse = (): string => {
-      const baseResponses = this.getBaseResponsesByLanguage(language);
+      const baseResponse = this.getTargetedResponse(concernType, language);
       const ageContext = this.getAgeSpecificContext(age, language);
       const locationContext = this.getLocationSpecificContext(location, language);
-      const cbtTechnique = this.getRandomCBTTechnique(language);
+      const specificTechnique = this.getTargetedTechnique(concernType, language);
       
-      // Combine different elements to create a unique response
+      // Combine different elements to create a contextually relevant response
       const responseElements = [
-        baseResponses[Math.floor(Math.random() * baseResponses.length)],
+        baseResponse,
         ageContext,
         locationContext,
-        cbtTechnique
+        specificTechnique
       ].filter(Boolean);
       
       return responseElements.join('\n\n');
@@ -449,134 +321,273 @@ MAKE EVERY RESPONSE UNIQUE BY:
     };
   }
 
-  private getBaseResponsesByLanguage(language: string): string[] {
-    const responses: Record<string, string[]> = {
-      'en-US': [
-        "I can sense you're going through something challenging right now, and I want you to know that reaching out shows real courage.",
-        "What you're sharing with me matters deeply. Your feelings are completely valid, and you deserve support.",
-        "I'm genuinely glad you decided to open up about this. Taking care of your mental health is just as important as your physical health.",
-        "Thank you for trusting me with what's on your heart. Every feeling you're experiencing is important and worthy of attention.",
-        "I hear the weight in your words, and I want you to know that you're not alone in feeling this way.",
-        "Your willingness to share these feelings shows incredible self-awareness and strength."
-      ],
-      'hi-IN': [
-        "मैं समझ सकता हूं कि आप किसी मुश्किल दौर से गुजर रहे हैं, और मदद मांगना आपके साहस को दिखाता है।",
-        "आपकी हर बात मेरे लिए महत्वपूर्ण है। आपकी भावनाएं बिल्कुल सही हैं।",
-        "आपने मुझसे अपनी समस्या साझा की, इससे मुझे खुशी हुई। मानसिक स्वास्थ्य का ख्याल रखना जरूरी है।",
-        "मैं आपकी परेशानी को समझ रहा हूं। आप अकेले नहीं हैं।",
-        "आपका मुझ पर भरोसा करना मेरे लिए गर्व की बात है।",
-        "आपकी हिम्मत देखकर मैं प्रभावित हूं। यह दिखाता है कि आप मजबूत हैं।"
-      ],
-      'ta-IN': [
-        "நீங்கள் கடினமான சூழ்நிலையை எதிர்கொள்கிறீர்கள் என்பதை என்னால் உணர முடிகிறது, உதவி கேட்பது உங்கள் தைரியத்தைக் காட்டுகிறது.",
-        "நீங்கள் பகிர்ந்து கொள்வது எனக்கு மிகவும் முக்கியம். உங்கள் உணர்வுகள் முற்றிலும் சரியானவை.",
-        "நீங்கள் என்னிடம் இதைப் பகிர்ந்ததில் மகிழ்ச்சி. மனநலம் உடல்நலம் போலவே முக்கியம்.",
-        "உங்கள் வார்த்தைகளில் உள்ள எடையை என்னால் உணர முடிகிறது, நீங்கள் தனியாக இல்லை.",
-        "என்னிடம் நம்பிக்கை வைத்ததற்கு நன்றி. உங்கள் எல்லா உணர்வுகளும் முக்கியம்.",
-        "இந்த உணர்வுகளைப் பகிர்ந்து கொள்ள உங்களுக்கு இருக்கும் தைரியம் பாராட்டத்தக்கது."
-      ],
-      'te-IN': [
-        "మీరు కష్టమైన పరిస్థితిని ఎదుర్కొంటున్నారని నేను గ్రహించగలను, సహాయం అడగడం మీ ధైర్యాన్ని చూపిస్తుంది.",
-        "మీరు పంచుకున్నది నాకు చాలా ముఖ్యం. మీ భావనలు పూర్తిగా సరైనవి.",
-        "మీరు నాతో దీన్ని పంచుకున్నందుకు సంతోషం. మానసిక ఆరోగ్యం శారీరక ఆరోగ్యం వలె ముఖ్యం.",
-        "మీ మాటల్లోని భారాన్ని నేను అనుభవించగలను, మీరు ఒంటరిగా లేరు.",
-        "నన్ను నమ్మినందుకు ధన్యవాదాలు. మీ అన్ని భావాలు ముఖ్యమైనవి.",
-        "ఈ భావాలను పంచుకోవడానికి మీకున్న అంతర్గత శక్తి అభినందనీయం."
-      ],
-      'kn-IN': [
-        "ನೀವು ಕಠಿಣ ಪರಿಸ್ಥಿತಿಯನ್ನು ಎದುರಿಸುತ್ತಿದ್ದೀರಿ ಎಂದು ನಾನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳಬಲ್ಲೆ, ಸಹಾಯ ಕೇಳುವುದು ನಿಮ್ಮ ಧೈರ್ಯವನ್ನು ತೋರಿಸುತ್ತದೆ.",
-        "ನೀವು ಹಂಚಿಕೊಂಡಿದ್ದು ನನಗೆ ಬಹಳ ಮುಖ್ಯ. ನಿಮ್ಮ ಭಾವನೆಗಳು ಸಂಪೂರ್ಣವಾಗಿ ಸರಿಯಾಗಿವೆ.",
-        "ನೀವು ನನ್ನೊಂದಿಗೆ ಇದನ್ನು ಹಂಚಿಕೊಂಡಿದ್ದಕ್ಕೆ ಸಂತೋಷ. ಮಾನಸಿಕ ಆರೋಗ್ಯವು ದೈಹಿಕ ಆರೋಗ್ಯದಷ್ಟೇ ಮುಖ್ಯ.",
-        "ನಿಮ್ಮ ಮಾತುಗಳಲ್ಲಿನ ಭಾರವನ್ನು ನಾನು ಅನುಭವಿಸಬಲ್ಲೆ, ನೀವು ಏಕಾಂಗಿಯಾಗಿಲ್ಲ.",
-        "ನನ್ನ ಮೇಲೆ ನಂಬಿಕೆ ಇಟ್ಟಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ಎಲ್ಲಾ ಭಾವನೆಗಳು ಮುಖ್ಯವಾಗಿವೆ.",
-        "ಈ ಭಾವನೆಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲು ನಿಮಗಿರುವ ಧೈರ್ಯ ಶ್ಲಾಘನೀಯ."
-      ]
-    };
-    
-    return responses[language] || responses['en-US'];
+  private async generateEnhancedResponse(userPrompt: string, context: UserContext): Promise<AIResponse> {
+    try {
+      // Use the enhanced CBT API endpoint
+      const response = await fetch('/api/enhanced-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userPrompt,
+          userLocation: context.location,
+          language: context.language || 'en-US',
+          age: context.age,
+          guestMode: context.guestMode
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Enhanced chat API failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Enhanced response failed, falling back to basic response:', error);
+      // Fallback to basic response if enhanced API fails
+      return this.generateBasicResponse(userPrompt, context);
+    }
   }
+
+  private analyzeConcernType(prompt: string): string {
+    const lowerPrompt = prompt.toLowerCase();
+    
+    // Academic and exam-related concerns
+    const examKeywords = ['exam', 'test', 'grade', 'marks', 'score', 'result', 'performance', 'academic', 'study', 'studies', 'semester', 'assignment', 'homework', 'report'];
+    const stressKeywords = ['stress', 'pressure', 'overwhelmed', 'burden', 'workload'];
+    const anxietyKeywords = ['anxious', 'nervous', 'worried', 'fear', 'panic', 'anxiety'];
+    const depressionKeywords = ['sad', 'depressed', 'hopeless', 'empty', 'down', 'low'];
+    const relationshipKeywords = ['friend', 'relationship', 'family', 'lonely', 'social', 'isolated'];
+    const sleepKeywords = ['sleep', 'insomnia', 'tired', 'exhausted', 'rest'];
+    
+    // Priority order: more specific concerns first
+    if (examKeywords.some(keyword => lowerPrompt.includes(keyword))) {
+      if (anxietyKeywords.some(keyword => lowerPrompt.includes(keyword))) {
+        return 'exam-anxiety';
+      } else if (stressKeywords.some(keyword => lowerPrompt.includes(keyword))) {
+        return 'academic-stress';
+      } else {
+        return 'academic-general';
+      }
+    } else if (anxietyKeywords.some(keyword => lowerPrompt.includes(keyword))) {
+      return 'anxiety';
+    } else if (depressionKeywords.some(keyword => lowerPrompt.includes(keyword))) {
+      return 'depression';
+    } else if (stressKeywords.some(keyword => lowerPrompt.includes(keyword))) {
+      return 'stress';
+    } else if (relationshipKeywords.some(keyword => lowerPrompt.includes(keyword))) {
+      return 'relationship';
+    } else if (sleepKeywords.some(keyword => lowerPrompt.includes(keyword))) {
+      return 'sleep';
+    } else {
+      return 'general';
+    }
+  }
+
+  private getTargetedResponse(concernType: string, language: string = 'en-US'): string {
+    const responses: Record<string, Record<string, string[]>> = {
+      'en-US': {
+        'exam-anxiety': [
+          "I understand how overwhelming exam concerns can feel. It's completely normal to feel anxious about your academic performance - this shows you care about your education.",
+          "Exam worries are incredibly common among students. Your feelings about your results are valid, and there are effective ways to manage this academic anxiety.",
+          "I can sense the pressure you're feeling about your exams. Academic stress is real, and it's important to address both your emotional wellbeing and study strategies."
+        ],
+        'academic-stress': [
+          "Academic pressure can feel intense, and I want you to know that struggling with your studies doesn't define your worth or potential.",
+          "The stress you're experiencing with your academic work is something many students face. Let's focus on both managing this stress and finding practical study strategies.",
+          "I hear that you're dealing with academic challenges. Remember that learning is a process, and setbacks are opportunities for growth, not failures."
+        ],
+        'academic-general': [
+          "Academic concerns are a significant part of student life. Whether it's about performance, grades, or study habits, these worries deserve attention and support.",
+          "I'm glad you're reaching out about your academic concerns. Your education is important, and so is your mental health while pursuing it.",
+          "Academic challenges can affect our overall wellbeing. Let's explore ways to support both your educational goals and your emotional health."
+        ],
+        'anxiety': [
+          "I can sense the anxiety you're experiencing, and I want you to know that what you're feeling is real and manageable with the right support and techniques.",
+          "Anxiety can feel overwhelming, but you've taken an important step by acknowledging it. There are proven methods to help reduce these feelings.",
+          "Thank you for sharing about your anxiety. These feelings, while difficult, are treatable, and you don't have to face them alone."
+        ],
+        'stress': [
+          "Stress is your body's way of responding to challenges, and while it's normal, chronic stress needs attention. I'm here to help you find healthy coping strategies.",
+          "I understand you're dealing with stress right now. Recognizing and addressing stress is crucial for your overall wellbeing and daily functioning.",
+          "Stress affects everyone differently, and what you're experiencing is valid. Let's explore some techniques to help you manage these feelings more effectively."
+        ],
+        'general': [
+          "I'm genuinely glad you decided to reach out today. Whatever you're going through, your feelings matter, and seeking support shows real strength.",
+          "Thank you for trusting me with what's on your mind. Every person's experience is unique, and I'm here to provide support tailored to your needs.",
+          "It takes courage to open up about personal challenges. I want you to know that you're not alone, and there are resources available to help you."
+        ]
+      },
+      'hi-IN': {
+        'exam-anxiety': [
+          "मैं समझता हूं कि परीक्षा की चिंता कितनी भारी लग सकती है। अपने शैक्षणिक प्रदर्शन को लेकर चिंतित होना बिल्कुल सामान्य है।",
+          "परीक्षा की चिंता छात्रों में बहुत आम है। आपकी भावनाएं वैध हैं, और इस शैक्षणिक तनाव को संभालने के प्रभावी तरीके हैं।"
+        ],
+        'academic-stress': [
+          "शैक्षणिक दबाव गहरा लग सकता है। पढ़ाई में संघर्ष आपकी योग्यता या क्षमता को परिभाषित नहीं करता।",
+          "आपका शैक्षणिक तनाव कई छात्र महसूस करते हैं। आइए इस तनाव को संभालने और अध्ययन रणनीतियों पर ध्यान दें।"
+        ],
+        'general': [
+          "मुझे खुशी है कि आपने आज संपर्क किया। आप जो कुछ भी झेल रहे हैं, आपकी भावनाएं महत्वपूर्ण हैं।",
+          "आपका मन की बात साझा करना साहस दिखाता है। आप अकेले नहीं हैं।"
+        ]
+      }
+    };
+
+    const languageResponses = responses[language] || responses['en-US'];
+    const typeResponses = languageResponses[concernType] || languageResponses['general'];
+    return typeResponses[Math.floor(Math.random() * typeResponses.length)];
+  }
+
+  private getTargetedTechnique(concernType: string, language: string = 'en-US'): string {
+    const techniques: Record<string, Record<string, string[]>> = {
+      'en-US': {
+        'exam-anxiety': [
+          "For exam anxiety, try the '3-3-3 rule': Name 3 things you can see, 3 sounds you can hear, and move 3 parts of your body. This grounds you in the present moment.",
+          "Create a realistic study schedule and break large topics into smaller, manageable chunks. Remember: preparation reduces anxiety, and progress is more important than perfection.",
+          "Practice positive self-talk: Replace 'I'm going to fail' with 'I'm prepared and will do my best.' Visualization techniques can also help - imagine yourself calmly taking the exam.",
+          "Try progressive muscle relaxation before studying: tense and release each muscle group for 5 seconds. This helps reduce physical tension associated with exam stress."
+        ],
+        'academic-stress': [
+          "Implement the Pomodoro Technique: Study for 25 minutes, then take a 5-minute break. This prevents burnout and maintains focus throughout your study sessions.",
+          "Create a priority matrix for your academic tasks: urgent/important, important/not urgent, etc. This helps you focus on what truly matters and reduces overwhelm.",
+          "Set SMART goals for your studies: Specific, Measurable, Achievable, Relevant, Time-bound. Small wins build momentum and confidence.",
+          "Practice the 'two-minute rule': If a study task takes less than two minutes, do it immediately. For larger tasks, break them into two-minute components."
+        ],
+        'academic-general': [
+          "Develop a consistent study routine that includes regular breaks, proper nutrition, and adequate sleep. Your brain needs these foundations to perform optimally.",
+          "Use active learning techniques: summarize information in your own words, teach concepts to others, or create mind maps. Engagement improves retention and understanding.",
+          "Join study groups or find an accountability partner. Collaborative learning can provide new perspectives and keep you motivated.",
+          "Remember that academic success is not just about grades - it's about growth, learning, and developing critical thinking skills that will serve you throughout life."
+        ],
+        'anxiety': [
+          "Practice the 4-7-8 breathing technique: Inhale for 4 counts, hold for 7, exhale for 8. This activates your parasympathetic nervous system and promotes calm.",
+          "Try grounding techniques when anxiety peaks: Name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste.",
+          "Challenge anxious thoughts by asking: 'Is this thought realistic? What would I tell a friend in this situation? What's the worst that could realistically happen?'",
+          "Consider keeping an anxiety journal to identify triggers and patterns. Understanding your anxiety can help you develop personalized coping strategies."
+        ],
+        'stress': [
+          "Practice time management: Use tools like calendars and to-do lists to organize your responsibilities. Feeling in control reduces stress significantly.",
+          "Engage in regular physical activity, even just a 10-minute walk. Exercise is one of the most effective stress relievers and mood boosters available.",
+          "Try progressive muscle relaxation: Starting from your toes, tense and release each muscle group for 5 seconds. This releases physical tension stored in your body.",
+          "Establish boundaries: It's okay to say no to additional commitments when you're already stressed. Protecting your mental energy is essential for your wellbeing."
+        ],
+        'general': [
+          "Practice mindful breathing: Focus on your breath for just 2-3 minutes. When your mind wanders, gently bring attention back to breathing. This builds mental resilience over time.",
+          "Try journaling for 5-10 minutes each day. Writing about your thoughts and feelings can provide clarity and emotional release.",
+          "Connect with supportive people in your life. Social connection is fundamental to mental health and can provide perspective during difficult times.",
+          "Remember: seeking help is a sign of strength, not weakness. Professional counselors, therapists, and support groups are valuable resources for your mental health journey."
+        ]
+      },
+      'hi-IN': {
+        'exam-anxiety': [
+          "परीक्षा की चिंता के लिए '3-3-3 नियम' आज़माएं: 3 चीजें देखें, 3 आवाजें सुनें, और शरीर के 3 हिस्से हिलाएं।",
+          "एक वास्तविक अध्ययन समय सारणी बनाएं और बड़े विषयों को छोटे भागों में बांटें। तैयारी चिंता को कम करती है।"
+        ],
+        'academic-stress': [
+          "पोमोडोरो तकनीक का उपयोग करें: 25 मिनट पढ़ें, फिर 5 मिनट का ब्रेक लें। यह बर्नआउट को रोकता है।",
+          "अपने शैक्षणिक कार्यों के लिए प्राथमिकता मैट्रिक्स बनाएं: तत्काल/महत्वपूर्ण, महत्वपूर्ण/तत्काल नहीं।"
+        ],
+        'general': [
+          "माइंडफुल सांस लेने का अभ्यास करें: सिर्फ 2-3 मिनट अपनी सांस पर ध्यान दें।",
+          "सहायक लोगों से जुड़ें। सामाजिक संपर्क मानसिक स्वास्थ्य के लिए मौलिक है।"
+        ]
+      }
+    };
+
+    const languageTechniques = techniques[language] || techniques['en-US'];
+    const typeTechniques = languageTechniques[concernType] || languageTechniques['general'];
+    return typeTechniques[Math.floor(Math.random() * typeTechniques.length)];
+  }
+
+
 
   private getAgeSpecificContext(age?: number, language: string = 'en-US'): string {
     if (!age) return '';
-    
+
     const contexts: Record<string, Record<string, string>> = {
       'en-US': {
-        teen: "As a teenager, you're navigating so many changes - academically, socially, and personally. These feelings are completely normal during this transformative time.",
-        youngAdult: "This phase of life often brings uncertainty about the future, career choices, and relationships. Many young adults experience similar feelings.",
-        professional: "Balancing work, relationships, and personal growth can be overwhelming. You're managing multiple responsibilities, and it's understandable to feel this way.",
-        mature: "Life transitions at this stage can bring unique challenges. Your experiences and wisdom are valuable, and these feelings deserve attention."
+        'teen': "Being a teenager comes with unique pressures and changes. What you're experiencing is part of navigating this important time in your life.",
+        'young-adult': "Young adulthood brings its own set of challenges as you're building your identity and future. These feelings are more common than you might think.",
+        'adult': "Adult life can feel overwhelming with all its responsibilities. It's completely normal to need support during difficult times.",
+        'senior': "Life experiences bring wisdom, but they can also bring unique challenges. Your feelings and experiences are valuable and worth addressing."
       },
       'hi-IN': {
-        teen: "किशोरावस्था में पढ़ाई, दोस्तों और भविष्य की चिंता होना सामान्य है। आपकी उम्र में ये भावनाएं होना स्वाभाविक है।",
-        youngAdult: "इस उम्र में करियर और रिश्तों को लेकर परेशानी होना आम बात है। कई युवा इसी तरह महसूस करते हैं।",
-        professional: "काम, घर और रिश्तों के बीच संतुलन बनाना मुश्किल हो सकता है। इस उम्र में ये दबाव होना समझ में आता है।",
-        mature: "इस उम्र में जीवन के नए मोड़ आते हैं। आपका अनुभव कीमती है, और ये भावनाएं महत्वपूर्ण हैं।"
+        'teen': "किशोरावस्था अपने अनूठे दबाव और बदलाव लेकर आती है। आप जो अनुभव कर रहे हैं वह इस महत्वपूर्ण समय को संभालने का हिस्सा है।",
+        'young-adult': "युवावस्था अपनी चुनौतियां लेकर आती है। ये भावनाएं आपको लगने से कहीं अधिक सामान्य हैं।",
+        'adult': "वयस्क जीवन अपनी जिम्मेदारियों के साथ भारी लग सकता है। कठिन समय में सहारे की जरूरत होना बिल्कुल सामान्य है।",
+        'senior': "जीवन के अनुभव ज्ञान लाते हैं, लेकिन वे अनूठी चुनौतियां भी ला सकते हैं।"
       }
     };
-    
-    const langContexts = contexts[language] || contexts['en-US'];
-    
-    if (age >= 13 && age <= 17) return langContexts.teen;
-    if (age >= 18 && age <= 25) return langContexts.youngAdult;
-    if (age >= 26 && age <= 35) return langContexts.professional;
-    if (age > 35) return langContexts.mature;
-    
-    return '';
+
+    let ageGroup = 'adult';
+    if (age < 18) ageGroup = 'teen';
+    else if (age < 25) ageGroup = 'young-adult';
+    else if (age > 60) ageGroup = 'senior';
+
+    return contexts[language]?.[ageGroup] || contexts['en-US'][ageGroup];
   }
 
   private getLocationSpecificContext(location?: any, language: string = 'en-US'): string {
-    if (!location || !location.country) return '';
-    
+    if (!location) return '';
+
+    const country = location?.country?.toLowerCase() || 'default';
+    const state = location?.state;
+    const city = location?.city;
+
     const contexts: Record<string, Record<string, string>> = {
       'en-US': {
-        mumbai: "Living in Mumbai's fast-paced environment can be both exciting and exhausting. The city's energy is infectious, but it's also okay to need moments of calm.",
-        bangalore: "Bangalore's tech culture and traffic can sometimes feel overwhelming. Remember to take breaks and enjoy the city's pleasant weather and parks.",
-        delhi: "Delhi's dynamic environment offers many opportunities, but the pace and pollution can sometimes affect our mental well-being.",
-        chennai: "Chennai's rich cultural heritage and warm community can be comforting during difficult times. Consider connecting with local traditions for peace.",
-        general: "India's rich cultural traditions offer many ways to find peace - through yoga, meditation, family support, and community connections."
+        'india': `I understand the unique cultural pressures in India, especially around academic achievement, family expectations, and social relationships. These challenges can vary across different regions, and I'm here to provide culturally sensitive support.`,
+        'united states': `Living in the United States comes with its own set of challenges. The American culture of individual achievement and success can create significant pressure. You're not alone in these feelings.`,
+        'united kingdom': `I recognize the cultural context of living in the UK. The British approach to mental health is evolving, and it's completely valid to seek support for your wellbeing.`,
+        'canada': `Living in Canada, there are unique challenges including weather-related mood changes and multicultural integration stress. Canadian healthcare supports mental health, and reaching out is encouraged.`,
+        'australia': `Living in Australia can involve challenges like isolation from family (if you've immigrated) or seasonal factors. Australians are increasingly open about mental health support.`,
+        'germany': `In Germany, the cultural approach values efficiency and structure, which can sometimes create pressure. It's important to balance achievement with self-care.`,
+        'france': `French culture values intellectual discussion and family time. You might face unique stressors, but seeking mental health support is increasingly accepted.`,
+        'japan': `Living in Japan involves navigating complex social expectations and work-life balance. Your feelings are valid in the context of Japanese society's unique pressures.`,
+        'china': `In Chinese culture, there are significant academic and family pressures. Mental health awareness is growing, and your wellbeing matters.`,
+        'brazil': `Brazilian culture emphasizes family and community support. You can leverage these strong social connections while addressing your mental health needs.`,
+        'south africa': `South African communities have strong Ubuntu principles of interconnectedness. Your struggles are shared by your community, and healing happens together.`,
+        'default': `These feelings are valid and support is available regardless of where you are. Cultural context matters, and your experience is unique to your environment.`
       },
       'hi-IN': {
-        mumbai: "मुंबई की तेज़ जिंदगी कभी-कभी थका देती है। यहां के सपनों के शहर में अपना ख्याल रखना भी जरूरी है।",
-        bangalore: "बैंगलोर के IT culture और ट्रैफिक में कभी-कभी परेशानी हो सकती है। शहर के पार्कों में वक्त बिताएं।",
-        delhi: "दिल्ली के व्यस्त माहौल में अपने लिए शांत वक्त निकालना जरूरी है। यहां के इतिहास से प्रेरणा लें।",
-        chennai: "चेन्नई की सांस्कृतिक धरोहर और समुदायिक भावना मुश्किल वक्त में सहारा दे सकती है।",
-        general: "भारत की परंपराओं में योग, ध्यान और पारिवारिक सहयोग के जरिए शांति मिल सकती है।"
+        'india': `मैं भारत के सांस्कृतिक दबावों को समझता हूं, विशेषकर शैक्षणिक उपलब्धि, पारिवारिक अपेक्षाओं और सामाजिक रिश्तों के बारे में। ये चुनौतियां अलग-अलग क्षेत्रों में अलग हो सकती हैं।`,
+        'default': `आपकी भावनाएं वैध हैं और सहारा उपलब्ध है। सांस्कृतिक संदर्भ मायने रखता है।`
       }
     };
-    
-    const langContexts = contexts[language] || contexts['en-US'];
-    const city = location.city?.toLowerCase() || '';
-    
-    if (city.includes('mumbai') || city.includes('bombay')) return langContexts.mumbai;
-    if (city.includes('bangalore') || city.includes('bengaluru')) return langContexts.bangalore;
-    if (city.includes('delhi')) return langContexts.delhi;
-    if (city.includes('chennai')) return langContexts.chennai;
-    
-    return langContexts.general;
+
+    const languageContext = contexts[language] || contexts['en-US'];
+    return languageContext[country] || languageContext['default'] || '';
   }
 
-  private getRandomCBTTechnique(language: string = 'en-US'): string {
-    const techniques: Record<string, string[]> = {
-      'en-US': [
-        "Try this quick grounding technique: Name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste.",
-        "Take a moment to breathe deeply. Inhale for 4 counts, hold for 4, exhale for 6. This can help calm your nervous system.",
-        "Write down one negative thought you're having, then challenge it: Is this thought helpful? Is it based on facts or assumptions?",
-        "Practice gratitude: Can you think of one small thing that went well today, even if the rest was difficult?",
-        "Try progressive muscle relaxation: Tense your shoulders for 5 seconds, then release. Notice the difference between tension and relaxation."
-      ],
-      'hi-IN': [
-        "ये ग्राउंडिंग तकनीक आजमाएं: 5 चीजें देखें, 4 को छुएं, 3 सुनें, 2 को सूंघें, और 1 का स्वाद लें।",
-        "गहरी सांस लें: 4 गिनती में सांस अंदर लें, 4 तक रोकें, 6 में छोड़ें। यह तनाव कम करेगा।",
-        "एक नकारात्मक विचार लिखें, फिर सवाल करें: क्या ये विचार सहायक है? क्या ये तथ्य पर आधारित है?",
-        "कृतज्ञता का अभ्यास करें: आज कोई एक छोटी अच्छी बात के बारे में सोचें।",
-        "मांसपेशियों को तनावमुक्त करें: कंधों को 5 सेकंड तक सिकोड़ें, फिर छोड़ें। फर्क महसूस करें।"
-      ]
-    };
+
+
+  private assessSeverity(prompt: string): string {
+    const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'not worth living', 'hurt myself'];
+    const highSeverityKeywords = ['depressed', 'hopeless', 'can\'t cope', 'overwhelmed', 'panic'];
     
-    const langTechniques = techniques[language] || techniques['en-US'];
-    return langTechniques[Math.floor(Math.random() * langTechniques.length)];
+    const lowerPrompt = prompt.toLowerCase();
+    
+    if (crisisKeywords.some(keyword => lowerPrompt.includes(keyword))) {
+      return 'crisis';
+    } else if (highSeverityKeywords.some(keyword => lowerPrompt.includes(keyword))) {
+      return 'high';
+    } else {
+      return 'moderate';
+    }
+  }
+
+  private detectCrisis(prompt: string): boolean {
+    const crisisKeywords = [
+      'suicide', 'kill myself', 'end it all', 'not worth living', 'hurt myself',
+      'want to die', 'better off dead', 'end my life', 'self harm'
+    ];
+    
+    const lowerPrompt = prompt.toLowerCase();
+    return crisisKeywords.some(keyword => lowerPrompt.includes(keyword));
   }
 }
 
-// Export singleton instance
 export const aiService = new AIService();

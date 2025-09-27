@@ -1,7 +1,6 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef } from "react";
-import { motion } from "framer-motion";
 import { useLocation } from "../../hooks/useLocation";
 import VoiceInput from "../../components/VoiceInput";
 import { useAuth } from "../../contexts/AuthContext";
@@ -76,288 +75,393 @@ export default function PromptPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-blue-100 via-purple-100 to-pink-100">
-      <motion.section 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-        className="flex flex-col items-center justify-center min-h-screen text-center px-4 py-8"
-      >
-        <motion.h2 
-          initial={{ y: -20 }}
-          animate={{ y: 0 }}
-          className="text-4xl font-bold text-blue-600 mb-4"
-        >
-          Hi Buddy...Share what's in your mind
-        </motion.h2>
-        
-        {/* Location Context Indicator */}
-        {location ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4 text-sm bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center"
-          >
-            <svg className="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span className="text-blue-700">
-              🌍 Providing culturally aware support for {location.city}, {location.state}, {location.country}
-            </span>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4 text-sm bg-orange-50 border border-orange-200 rounded-lg px-4 py-2 flex items-center"
-          >
-            <svg className="w-4 h-4 text-orange-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <span className="text-orange-700 mr-3">
-              Enable location for culturally-aware responses
-            </span>
-            <button
-              onClick={detectLocation}
-              className="px-3 py-1 bg-blue-600 text-white text-xs rounded-full hover:bg-blue-700 transition-colors"
-            >
-              📍 Get Location
-            </button>
-          </motion.div>
-        )}
-        
-        {/* Chat Area with Simple Smiley */}
-        <div className="flex items-start gap-6 w-full max-w-4xl">
-          {/* Left Simple Smiley Mascot */}
-          <motion.div 
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="hidden md:block flex-shrink-0"
-          >
-            <motion.div
-              animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
-              transition={{ repeat: Infinity, duration: 4 }}
-              className="relative"
-            >
-              {/* Large Smiley Face */}
-              <div className="w-24 h-24 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full relative shadow-lg border-4 border-yellow-300">
-                {/* Eyes */}
-                <div className="absolute top-6 left-6 w-3 h-3 bg-gray-800 rounded-full"></div>
-                <div className="absolute top-6 right-6 w-3 h-3 bg-gray-800 rounded-full"></div>
-                {/* Smile */}
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-8 h-4 border-4 border-gray-800 border-t-transparent rounded-b-full"></div>
-              </div>
-              {/* Speech bubble from mascot - repositioned to avoid overlap */}
-              <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.5 }}
-                className="absolute -right-32 -top-2 bg-white px-3 py-2 rounded-lg shadow-md border border-gray-200 text-sm text-gray-700 whitespace-nowrap"
-              >
-                I'm here to help! 😊
-                <div className="absolute left-0 top-6 w-0 h-0 border-r-8 border-t-4 border-b-4 border-transparent border-r-white -translate-x-2"></div>
-              </motion.div>
-            </motion.div>
-          </motion.div>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f8f9fa',
+      fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+      margin: 0,
+      padding: 0
+    }}>
+      {/* Hero Section */}
+      <section style={{
+        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        color: 'white',
+        padding: '60px 20px',
+        textAlign: 'center'
+      }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <h1 style={{ 
+            margin: 0, 
+            fontSize: '36px', 
+            fontWeight: '700',
+            marginBottom: '16px',
+            letterSpacing: '-0.5px'
+          }}>Hi Buddy... Share what's in your mind</h1>
+          <p style={{ 
+            fontSize: '18px', 
+            opacity: 0.9,
+            fontWeight: '300',
+            lineHeight: '1.5'
+          }}>
+            Your AI companion is here to listen and support you 24/7
+          </p>
 
-          {/* Voice Input Component */}
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="flex-1 max-w-2xl mx-auto relative"
-          >
-            <VoiceInput 
-              onTranscript={handleVoiceTranscript}
-              placeholder="Share what's in your mind... You can type or speak in your preferred language"
-              disabled={loading}
-            />
-          </motion.div>
+          {/* Location Context Indicator */}
+          {location && (
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              marginTop: '16px',
+              fontSize: '14px',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.3)'
+            }}>
+              <span style={{ marginRight: '8px' }}>📍</span>
+              Providing support for {location.city}, {location.state}
+            </div>
+          )}
         </div>
+      </section>
 
-        {error && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-6 text-red-600 font-medium"
-          >
-            {error}
-          </motion.div>
-        )}        {/* Show popup for CRISIS/SEVERE */}
-        {popup && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={`mt-8 w-full max-w-xl text-left rounded-xl p-6 shadow-2xl
-              ${popup.severity === "CRISIS" ? "bg-red-100 border border-red-300" : "bg-yellow-100 border border-yellow-300"}
-            `}
-          >
-            <h3 className={`text-lg font-semibold mb-2
-              ${popup.severity === "CRISIS" ? "text-red-600" : "text-yellow-700"}
-            `}>
-              {popup.severity === "CRISIS" ? "🚨 Immediate Help Needed" : "⚠️ Heavy Feelings Detected"}
-            </h3>
-            <p className="text-gray-700 whitespace-pre-line mb-4">{popup.message}</p>
-            
-            {/* Crisis Resources with better formatting */}
-            {popup.resources && popup.resources.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="font-semibold text-gray-800 border-b pb-1">
-                  📞 Emergency Helplines
+      {/* Main Chat Container */}
+      <main style={{ 
+        maxWidth: '1000px', 
+        margin: '-30px auto 0',
+        padding: '0 20px',
+        position: 'relative'
+      }}>
+        {/* Chat Messages */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '20px',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+          minHeight: '500px',
+          marginBottom: '30px',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          {/* Chat Header */}
+          <div style={{
+            padding: '24px 32px',
+            borderBottom: '1px solid #e2e8f0',
+            backgroundColor: '#f7fafc',
+            borderRadius: '20px 20px 0 0'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '18px'
+                }}>
+                  🤖
+                </div>
+                <div>
+                  <h3 style={{ 
+                    margin: 0, 
+                    fontSize: '16px', 
+                    fontWeight: '600',
+                    color: '#1a202c'
+                  }}>
+                    SoulSync AI Assistant
+                  </h3>
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: '12px', 
+                    color: '#718096'
+                  }}>
+                    Online • Ready to help
+                  </p>
+                </div>
+              </div>
+              
+              {!location && (
+                <button
+                  onClick={detectLocation}
+                  style={{
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  📍 Detect Location
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Messages Area */}
+          <div style={{
+            flex: 1,
+            padding: '32px',
+            maxHeight: '400px',
+            overflowY: 'auto',
+            minHeight: '300px'
+          }}>
+            {messages.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '40px 20px',
+                color: '#718096'
+              }}>
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  borderRadius: '20px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '32px',
+                  marginBottom: '20px'
+                }}>
+                  💭
+                </div>
+                <h4 style={{ 
+                  fontSize: '18px', 
+                  fontWeight: '600',
+                  color: '#2d3748',
+                  marginBottom: '8px'
+                }}>
+                  Start Your Conversation
                 </h4>
-                {popup.resources.map((r: any, index: number) => (
+                <p style={{ 
+                  fontSize: '14px',
+                  lineHeight: '1.6'
+                }}>
+                  Share what's on your mind. I'm here to listen and provide support.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {messages.map((message) => (
                   <div
-                    key={r.url || index}
-                    className="bg-white rounded-lg p-3 border border-gray-300 shadow-sm"
+                    key={message.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: message.type === 'user' ? 'flex-end' : 'flex-start'
+                    }}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h5 className="font-medium text-gray-800">{r.name}</h5>
-                        {r.phone && (
-                          <div className="flex items-center mt-1">
-                            <span className="text-lg mr-2">📞</span>
-                            <a 
-                              href={`tel:${r.phone}`}
-                              className="text-blue-600 font-mono font-semibold hover:text-blue-800"
-                            >
-                              {r.phone}
-                            </a>
-                          </div>
-                        )}
-                        {r.location && (
-                          <div className="flex items-center mt-1">
-                            <span className="text-sm mr-2">📍</span>
-                            <span className="text-sm text-gray-600">{r.location}</span>
-                          </div>
-                        )}
+                    <div style={{
+                      maxWidth: '80%',
+                      padding: '16px 20px',
+                      borderRadius: message.type === 'user' ? '20px 20px 8px 20px' : '20px 20px 20px 8px',
+                      backgroundColor: message.type === 'user' ? '#10b981' : '#f7fafc',
+                      color: message.type === 'user' ? 'white' : '#2d3748',
+                      fontSize: '14px',
+                      lineHeight: '1.5',
+                      border: message.type === 'ai' ? '1px solid #e2e8f0' : 'none'
+                    }}>
+                      {message.content}
+                      <div style={{
+                        marginTop: '8px',
+                        fontSize: '11px',
+                        opacity: 0.7
+                      }}>
+                        {message.timestamp.toLocaleTimeString()}
                       </div>
-                      {r.url && (
-                        <a
-                          href={r.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-2 text-blue-600 hover:text-blue-800 text-sm underline"
-                        >
-                          Visit
-                        </a>
-                      )}
                     </div>
                   </div>
                 ))}
+                
+                {loading && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'flex-start'
+                  }}>
+                    <div style={{
+                      padding: '16px 20px',
+                      borderRadius: '20px 20px 20px 8px',
+                      backgroundColor: '#f7fafc',
+                      border: '1px solid #e2e8f0',
+                      fontSize: '14px',
+                      color: '#718096'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <div style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: '#10b981',
+                          animation: 'pulse 1.5s infinite'
+                        }}></div>
+                        AI is typing...
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </motion.div>
-        )}
+          </div>
 
-        {/* Chat Messages */}
-        {messages.length > 0 && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 w-full max-w-3xl space-y-4"
-          >
-            {messages.map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`max-w-[80%] rounded-lg p-4 shadow-md ${
-                  message.type === 'user' 
-                    ? 'bg-blue-500 text-white ml-8' 
-                    : 'bg-white border border-gray-200 text-gray-800 mr-8'
-                }`}>
-                  {message.type === 'ai' && (
-                    <div className="flex items-center mb-2">
-                      <div className="w-6 h-6 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full mr-2 flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">AI</span>
-                      </div>
-                      <span className="text-sm font-semibold text-blue-600">SoulSync</span>
-                    </div>
-                  )}
-                  <div className="prose prose-sm max-w-none">
-                    <div 
-                      className="whitespace-pre-line leading-relaxed" 
-                      style={{
-                        fontSize: '14px',
-                        lineHeight: '1.6',
-                        wordSpacing: '0.1em'
-                      }}
-                      dangerouslySetInnerHTML={{
-                        __html: message.content
-                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\n\n/g, '<br><br>')
-                          .replace(/^\d+\.\s/gm, '<div style="margin: 8px 0;"><strong>$&</strong>')
-                          .replace(/^[•·]\s/gm, '<div style="margin: 4px 0; padding-left: 12px;">$&')
-                          .replace(/🌟|💭|🆘|📞|📍|☕|🎵|🏛️|🌸|🎨/g, '<span style="font-size: 16px;">$&</span>')
-                      }}
-                    />
-                  </div>
-                  
-                  <div className={`text-xs mt-2 ${
-                    message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
-                  }`}>
-                    {message.timestamp.toLocaleTimeString([], { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+          {/* Voice Input Area */}
+          <div style={{
+            padding: '24px 32px',
+            borderTop: '1px solid #e2e8f0',
+            backgroundColor: '#fafafa',
+            borderRadius: '0 0 20px 20px'
+          }}>
+            <VoiceInput onTranscript={handleVoiceTranscript} />
             
-            {/* Typing indicator when loading */}
-            {loading && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex justify-start"
-              >
-                <div className="bg-gray-100 border border-gray-200 rounded-lg p-4 shadow-md mr-8">
-                  <div className="flex items-center mb-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full mr-2 flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">AI</span>
-                    </div>
-                    <span className="text-sm font-semibold text-blue-600">SoulSync</span>
-                  </div>
-                  <div className="flex space-x-1">
-                    <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.5, delay: 0 }}
-                      className="w-2 h-2 bg-gray-400 rounded-full"
-                    />
-                    <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }}
-                      className="w-2 h-2 bg-gray-400 rounded-full"
-                    />
-                    <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }}
-                      className="w-2 h-2 bg-gray-400 rounded-full"
-                    />
-                  </div>
-                </div>
-              </motion.div>
+            {error && (
+              <div style={{
+                marginTop: '12px',
+                padding: '12px',
+                backgroundColor: '#fed7d7',
+                color: '#c53030',
+                borderRadius: '8px',
+                fontSize: '14px',
+                textAlign: 'center'
+              }}>
+                {error}
+              </div>
             )}
-          </motion.div>
-        )}
-      </motion.section>
+          </div>
+        </div>
 
-      {/* Floating Background Blobs */}
-      <motion.div
-        animate={{ x: [0, 20, -20, 0], y: [0, 10, -10, 0] }}
-        transition={{ repeat: Infinity, duration: 8 }}
-        className="absolute w-72 h-72 bg-purple-200 opacity-20 rounded-full top-20 left-10 blur-3xl -z-10"
-      />
-      <motion.div
-        animate={{ x: [0, -20, 20, 0], y: [0, -10, 10, 0] }}
-        transition={{ repeat: Infinity, duration: 10 }}
-        className="absolute w-96 h-96 bg-green-200 opacity-20 rounded-full bottom-10 right-10 blur-3xl -z-10"
-      />
+        {/* Emergency Support Card */}
+        <div style={{
+          backgroundColor: '#fee2e2',
+          border: '1px solid #fecaca',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '40px',
+          textAlign: 'center'
+        }}>
+          <h4 style={{
+            color: '#dc2626',
+            fontSize: '16px',
+            fontWeight: '600',
+            marginBottom: '8px'
+          }}>
+            🚨 Need Immediate Help?
+          </h4>
+          <p style={{
+            color: '#991b1b',
+            fontSize: '14px',
+            marginBottom: '12px'
+          }}>
+            If you're experiencing a mental health emergency, please reach out to professionals immediately.
+          </p>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '12px',
+            flexWrap: 'wrap'
+          }}>
+            <a
+              href="tel:988"
+              style={{
+                backgroundColor: '#dc2626',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                fontSize: '12px',
+                fontWeight: '500'
+              }}
+            >
+              Crisis Hotline: 988
+            </a>
+            <a
+              href="tel:911"
+              style={{
+                backgroundColor: '#7c2d12',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                fontSize: '12px',
+                fontWeight: '500'
+              }}
+            >
+              Emergency: 911
+            </a>
+          </div>
+        </div>
+      </main>
+
+      {/* Popup Modal */}
+      {popup && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '32px',
+            maxWidth: '500px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          }}>
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#1a202c',
+              marginBottom: '16px'
+            }}>
+              {popup.title}
+            </h3>
+            <p style={{
+              color: '#4a5568',
+              marginBottom: '24px',
+              lineHeight: '1.6'
+            }}>
+              {popup.message}
+            </p>
+            <button
+              onClick={() => setPopup(null)}
+              style={{
+                backgroundColor: '#10b981',
+                color: 'white',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

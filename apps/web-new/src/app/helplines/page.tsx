@@ -23,230 +23,17 @@ interface StateResource {
   };
 }
 
-const indianStateHelplines: StateResource[] = [
-  {
-    state: 'Delhi',
-    region: 'Northern India',
-    helplines: [
-      {
-        name: 'Delhi Government Mental Health Helpline',
-        phone: '011-23389090',
-        description: 'Free mental health counseling and crisis support for Delhi residents',
-        type: 'crisis',
-        available: '24/7',
-        languages: ['Hindi', 'English', 'Punjabi']
-      },
-      {
-        name: 'Mental Health Foundation Delhi',
-        phone: '011-26851468',
-        description: 'Professional counseling and therapy services',
-        type: 'counseling',
-        available: '9 AM - 6 PM',
-        languages: ['Hindi', 'English']
-      },
-      {
-        name: 'Youth Helpline Delhi',
-        phone: '011-25704732',
-        description: 'Specialized support for students and young adults',
-        type: 'youth',
-        available: '10 AM - 8 PM',
-        languages: ['Hindi', 'English']
-      }
-    ],
-    localResources: {
-      hospitals: ['AIIMS Delhi', 'Safdarjung Hospital', 'Lady Hardinge Medical College'],
-      counselingCenters: ['Delhi Psychiatric Centre', 'Vimhans Hospital'],
-      youthPrograms: ['Delhi University Counseling Cell', 'Youth Mental Health Initiative Delhi']
-    }
-  },
-  {
-    state: 'Maharashtra',
-    region: 'Western India',
-    helplines: [
-      {
-        name: 'Connecting Trust Mumbai',
-        phone: '022-26750000',
-        description: '24/7 emotional support and crisis intervention',
-        type: 'crisis',
-        available: '24/7',
-        languages: ['Hindi', 'English', 'Marathi']
-      },
-      {
-        name: 'Samaritans Mumbai',
-        phone: '022-32473267',
-        description: 'Suicide prevention and emotional support',
-        type: 'crisis',
-        available: '24/7',
-        languages: ['Hindi', 'English', 'Marathi']
-      },
-      {
-        name: 'Maharashtra Youth Counseling',
-        phone: '022-24157777',
-        description: 'Academic stress and career guidance for youth',
-        type: 'youth',
-        available: '9 AM - 9 PM',
-        languages: ['Hindi', 'English', 'Marathi']
-      }
-    ],
-    localResources: {
-      hospitals: ['KEM Hospital Mumbai', 'Sion Hospital', 'JJ Hospital'],
-      counselingCenters: ['Tata Institute of Social Sciences', 'Masina Hospital Mental Health'],
-      youthPrograms: ['Mumbai University Student Counseling', 'Youth for Mental Health Mumbai']
-    }
-  },
-  {
-    state: 'Tamil Nadu',
-    region: 'Southern India',
-    helplines: [
-      {
-        name: 'Sneha Chennai',
-        phone: '044-24640050',
-        description: 'Suicide prevention helpline serving Tamil Nadu',
-        type: 'crisis',
-        available: '24/7',
-        languages: ['Tamil', 'English', 'Hindi']
-      },
-      {
-        name: 'Parivarthan Coimbatore',
-        phone: '0422-2544042',
-        description: 'Mental health counseling and support',
-        type: 'counseling',
-        available: '8 AM - 8 PM',
-        languages: ['Tamil', 'English']
-      },
-      {
-        name: 'Tamil Nadu Youth Mental Health',
-        phone: '044-28512345',
-        description: 'Specialized support for Tamil youth and students',
-        type: 'youth',
-        available: '10 AM - 7 PM',
-        languages: ['Tamil', 'English']
-      }
-    ],
-    localResources: {
-      hospitals: ['Government General Hospital Chennai', 'Madras Medical College', 'Apollo Hospitals'],
-      counselingCenters: ['Institute of Mental Health Chennai', 'Schizophrenia Research Foundation'],
-      youthPrograms: ['Anna University Counseling Cell', 'Tamil Nadu Student Mental Health Initiative']
-    }
-  },
-  {
-    state: 'Karnataka',
-    region: 'Southern India',
-    helplines: [
-      {
-        name: 'Sahayavani Bangalore',
-        phone: '080-25497777',
-        description: 'Crisis helpline for mental health emergencies',
-        type: 'crisis',
-        available: '24/7',
-        languages: ['Kannada', 'English', 'Hindi']
-      },
-      {
-        name: 'NIMHANS Helpline',
-        phone: '080-26995000',
-        description: 'Professional mental health support and guidance',
-        type: 'counseling',
-        available: '9 AM - 5 PM',
-        languages: ['Kannada', 'English', 'Hindi']
-      },
-      {
-        name: 'Bangalore Youth Crisis Line',
-        phone: '080-22222222',
-        description: 'Support for IT professionals and students in Bangalore',
-        type: 'youth',
-        available: '6 PM - 10 PM',
-        languages: ['Kannada', 'English', 'Hindi']
-      }
-    ],
-    localResources: {
-      hospitals: ['NIMHANS Bangalore', 'Victoria Hospital', 'St. Johns Medical College'],
-      counselingCenters: ['Centre for Mental Health Law & Policy', 'Spandana Mental Health Center'],
-      youthPrograms: ['IISc Student Counseling', 'Bangalore IT Employee Mental Health Program']
-    }
-  },
-  {
-    state: 'Kerala',
-    region: 'Southern India',
-    helplines: [
-      {
-        name: 'Maithri Helpline Kochi',
-        phone: '0484-2540530',
-        description: 'Emotional support and crisis intervention',
-        type: 'crisis',
-        available: '24/7',
-        languages: ['Malayalam', 'English', 'Hindi']
-      },
-      {
-        name: 'Thanal Calicut',
-        phone: '0495-2760000',
-        description: 'Mental health counseling and support',
-        type: 'counseling',
-        available: '9 AM - 6 PM',
-        languages: ['Malayalam', 'English']
-      },
-      {
-        name: 'Kerala Youth Mental Wellness',
-        phone: '0471-2315555',
-        description: 'Youth-focused mental health support',
-        type: 'youth',
-        available: '10 AM - 8 PM',
-        languages: ['Malayalam', 'English']
-      }
-    ],
-    localResources: {
-      hospitals: ['Government Medical College Thiruvananthapuram', 'Medical College Calicut'],
-      counselingCenters: ['Institute of Mental Health & Neurosciences Kerala'],
-      youthPrograms: ['Kerala University Student Counseling', 'Kerala Youth Mental Health Initiative']
-    }
-  },
-  {
-    state: 'West Bengal',
-    region: 'Eastern India',
-    helplines: [
-      {
-        name: 'Kolkata Crisis Helpline',
-        phone: '033-24637401',
-        description: 'Crisis intervention and emotional support',
-        type: 'crisis',
-        available: '24/7',
-        languages: ['Bengali', 'English', 'Hindi']
-      },
-      {
-        name: 'Mental Health Foundation Kolkata',
-        phone: '033-22875000',
-        description: 'Counseling and therapy services',
-        type: 'counseling',
-        available: '9 AM - 7 PM',
-        languages: ['Bengali', 'English', 'Hindi']
-      },
-      {
-        name: 'Bengal Youth Support Line',
-        phone: '033-25551234',
-        description: 'Support for students and young professionals',
-        type: 'youth',
-        available: '2 PM - 9 PM',
-        languages: ['Bengali', 'English']
-      }
-    ],
-    localResources: {
-      hospitals: ['SSKM Hospital Kolkata', 'Medical College Kolkata', 'Institute of Psychiatry'],
-      counselingCenters: ['Centre for Cognitive & Behavioural Therapy'],
-      youthPrograms: ['Calcutta University Student Counseling', 'West Bengal Youth Mental Health']
-    }
-  }
-];
-
 const nationalHelplines: Helpline[] = [
   {
-    name: 'Vandrevala Foundation',
+    name: 'Free 24/7 mental health support across India',
     phone: '1860-2662-345',
-    description: 'Free 24/7 mental health support across India',
+    description: 'Confidential assessment for depression symptoms. Designed to understand mood challenges faced by Indian students and young adults including academic pressure and family expectations.',
     type: 'crisis',
     available: '24/7',
     languages: ['Hindi', 'English', 'Bengali', 'Tamil', 'Telugu', 'Marathi', 'Gujarati']
   },
   {
-    name: 'iCall Psychosocial Helpline',
+    name: 'Professional counseling and emotional support',
     phone: '9152987821',
     description: 'Professional counseling and emotional support',
     type: 'counseling',
@@ -275,9 +62,6 @@ export default function HelplinesPage() {
     }
   }, [location]);
 
-  const stateOptions = indianStateHelplines.map(resource => resource.state);
-  const selectedStateData = indianStateHelplines.find(resource => resource.state === selectedState);
-
   const filteredHelplines = (helplines: Helpline[]) => {
     if (filterType === 'all') return helplines;
     return helplines.filter(helpline => helpline.type === filterType);
@@ -291,108 +75,297 @@ export default function HelplinesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f8f9fa',
+      fontFamily: 'system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif',
+      margin: 0,
+      padding: 0
+    }}>
+      {/* Hero Section */}
+      <section style={{
+        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        color: 'white',
+        padding: '80px 20px',
+        textAlign: 'center'
+      }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <h1 style={{ 
+            margin: 0, 
+            fontSize: '42px', 
+            fontWeight: '700',
+            marginBottom: '16px',
+            letterSpacing: '-0.5px'
+          }}>
             Mental Health Helplines Directory 📞
           </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Find immediate mental health support across India. All helplines are confidential, 
-            non-judgmental, and specifically trained to help Indian youth overcome stigma and access care.
+          <p style={{ 
+            fontSize: '18px', 
+            opacity: 0.9,
+            fontWeight: '300',
+            lineHeight: '1.6',
+            marginBottom: '16px'
+          }}>
+            Find immediate mental health support across India. All helplines are confidential, non-judgmental, and specifically trained to help Indian youth overcome stigma and access care.
           </p>
+          
           {location && (
-            <p className="text-sm text-green-600 mt-2">
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              marginTop: '16px',
+              fontSize: '14px',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.3)'
+            }}>
               📍 Your location: {location.city}, {location.state} - Showing local resources
-            </p>
+            </div>
           )}
         </div>
+      </section>
 
+      {/* Main Content */}
+      <main style={{ 
+        maxWidth: '1200px', 
+        margin: '-40px auto 0',
+        padding: '0 20px',
+        position: 'relative'
+      }}>
         {/* Emergency Banner */}
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-red-800 mb-3">
-              🚨 In Crisis? Call Immediately
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {nationalHelplines.map((helpline, index) => (
-                <div key={index} className="bg-white rounded-lg p-4 border border-red-200">
-                  <h3 className="font-semibold text-red-800 mb-2">{helpline.name}</h3>
-                  <a
-                    href={`tel:${helpline.phone}`}
-                    className="block bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-center"
-                  >
-                    📞 {helpline.phone}
-                  </a>
-                  <p className="text-xs text-red-600 mt-2">{helpline.available}</p>
-                </div>
+        <div style={{
+          backgroundColor: '#fee2e2',
+          border: '1px solid #fecaca',
+          borderRadius: '16px',
+          padding: '32px',
+          marginBottom: '40px',
+          textAlign: 'center'
+        }}>
+          <h2 style={{
+            fontSize: '28px',
+            fontWeight: '700',
+            color: '#dc2626',
+            marginBottom: '24px'
+          }}>
+            🚨 In Crisis? Call Immediately
+          </h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '20px'
+          }}>
+            {nationalHelplines.map((helpline, index) => (
+              <div key={index} style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '24px',
+                border: '1px solid #fecaca',
+                boxShadow: '0 4px 16px rgba(220, 38, 38, 0.1)'
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#dc2626',
+                  marginBottom: '16px'
+                }}>
+                  {helpline.name}
+                </h3>
+                <a
+                  href={`tel:${helpline.phone}`}
+                  style={{
+                    display: 'block',
+                    backgroundColor: '#dc2626',
+                    color: 'white',
+                    padding: '12px 20px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontWeight: '600',
+                    textAlign: 'center',
+                    transition: 'background-color 0.2s ease',
+                    marginBottom: '12px'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b91c1c'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
+                >
+                  📞 {helpline.phone}
+                </a>
+                <p style={{
+                  fontSize: '12px',
+                  color: '#7f1d1d',
+                  margin: 0
+                }}>
+                  {helpline.available}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Filters Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+          padding: '24px',
+          marginBottom: '40px'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px'
+          }}>
+            <div style={{
+              display: 'flex',
+              gap: '12px'
+            }}>
+              {typeFilters.map(filter => (
+                <button
+                  key={filter.id}
+                  onClick={() => setFilterType(filter.id)}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    backgroundColor: filterType === filter.id ? '#10b981' : '#f1f5f9',
+                    color: filterType === filter.id ? 'white' : '#475569'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (filterType !== filter.id) {
+                      e.currentTarget.style.backgroundColor = '#dcfce7';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (filterType !== filter.id) {
+                      e.currentTarget.style.backgroundColor = '#f1f5f9';
+                    }
+                  }}
+                >
+                  {filter.icon} {filter.name}
+                </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* State Selection and Filters */}
-        <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
-          <select
-            value={selectedState}
-            onChange={(e) => setSelectedState(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Select Your State</option>
-            {stateOptions.map(state => (
-              <option key={state} value={state}>{state}</option>
-            ))}
-          </select>
-
-          <div className="flex gap-2">
-            {typeFilters.map(filter => (
-              <button
-                key={filter.id}
-                onClick={() => setFilterType(filter.id)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  filterType === filter.id
-                    ? 'bg-green-600 text-white'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-green-50'
-                }`}
-              >
-                {filter.icon} {filter.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Helplines Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: '32px',
+          marginBottom: '60px'
+        }}>
           {/* National Helplines */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+            padding: '40px'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '600',
+              color: '#1a202c',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
               🇮🇳 National Helplines
             </h2>
-            <p className="text-gray-600 mb-6">Available from anywhere in India</p>
+            <p style={{
+              color: '#4a5568',
+              marginBottom: '24px',
+              fontSize: '14px'
+            }}>
+              Available from anywhere in India
+            </p>
             
-            <div className="space-y-4">
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}>
               {filteredHelplines(nationalHelplines).map((helpline, index) => (
-                <div key={index} className="border-l-4 border-green-500 pl-4 py-3 bg-green-50 rounded-r-lg">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-800 mb-1">{helpline.name}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{helpline.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div key={index} style={{
+                  borderLeft: '4px solid #10b981',
+                  paddingLeft: '20px',
+                  paddingTop: '16px',
+                  paddingBottom: '16px',
+                  backgroundColor: '#f0fdf4',
+                  borderRadius: '0 12px 12px 0'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#1a202c',
+                        marginBottom: '8px'
+                      }}>
+                        {helpline.name}
+                      </h3>
+                      <p style={{
+                        fontSize: '14px',
+                        color: '#4a5568',
+                        marginBottom: '12px',
+                        lineHeight: '1.5'
+                      }}>
+                        {helpline.description}
+                      </p>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                        fontSize: '12px',
+                        color: '#6b7280'
+                      }}>
                         <span>⏰ {helpline.available}</span>
                         <span>🗣️ {helpline.languages?.join(', ')}</span>
                       </div>
                     </div>
                     <a
                       href={`tel:${helpline.phone}`}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium ml-4"
+                      style={{
+                        backgroundColor: '#10b981',
+                        color: 'white',
+                        padding: '10px 16px',
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        marginLeft: '16px',
+                        transition: 'background-color 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
                     >
                       📞 Call
                     </a>
                   </div>
-                  <div className="mt-2">
+                  <div>
                     <a
                       href={`tel:${helpline.phone}`}
-                      className="text-green-600 font-mono font-semibold hover:text-green-700"
+                      style={{
+                        color: '#10b981',
+                        fontFamily: 'monospace',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        textDecoration: 'none'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = '#059669'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = '#10b981'}
                     >
                       {helpline.phone}
                     </a>
@@ -402,116 +375,291 @@ export default function HelplinesPage() {
             </div>
           </div>
 
-          {/* State-Specific Resources */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            {selectedStateData ? (
-              <>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                  📍 {selectedStateData.state} Resources
-                </h2>
-                <p className="text-gray-600 mb-6">Local mental health support in {selectedStateData.region}</p>
-                
-                <div className="space-y-4 mb-6">
-                  {filteredHelplines(selectedStateData.helplines).map((helpline, index) => (
-                    <div key={index} className="border-l-4 border-blue-500 pl-4 py-3 bg-blue-50 rounded-r-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-800 mb-1">{helpline.name}</h3>
-                          <p className="text-sm text-gray-600 mb-2">{helpline.description}</p>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>⏰ {helpline.available}</span>
-                            <span>🗣️ {helpline.languages?.join(', ')}</span>
-                          </div>
-                        </div>
-                        <a
-                          href={`tel:${helpline.phone}`}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium ml-4"
-                        >
-                          📞 Call
-                        </a>
-                      </div>
-                      <div className="mt-2">
-                        <a
-                          href={`tel:${helpline.phone}`}
-                          className="text-blue-600 font-mono font-semibold hover:text-blue-700"
-                        >
-                          {helpline.phone}
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          {/* Local Resources */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+            padding: '40px'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '600',
+              color: '#1a202c',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              📍 Local mental health support in Southern India
+            </h2>
+            <p style={{
+              color: '#4a5568',
+              marginBottom: '24px',
+              fontSize: '14px'
+            }}>
+              Suicide prevention helpline serving Tamil Nadu
+            </p>
 
-                {selectedStateData.localResources && (
-                  <div className="pt-4 border-t border-gray-200">
-                    <h3 className="font-semibold text-gray-800 mb-3">🏥 Local Resources</h3>
-                    <div className="grid grid-cols-1 gap-3 text-sm">
-                      <div>
-                        <span className="font-medium text-gray-700">Hospitals:</span>
-                        <p className="text-gray-600">{selectedStateData.localResources.hospitals.join(', ')}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-700">Counseling Centers:</span>
-                        <p className="text-gray-600">{selectedStateData.localResources.counselingCenters.join(', ')}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-700">Youth Programs:</span>
-                        <p className="text-gray-600">{selectedStateData.localResources.youthPrograms.join(', ')}</p>
-                      </div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}>
+              <div style={{
+                borderLeft: '4px solid #3b82f6',
+                paddingLeft: '20px',
+                paddingTop: '16px',
+                paddingBottom: '16px',
+                backgroundColor: '#eff6ff',
+                borderRadius: '0 12px 12px 0'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      color: '#1a202c',
+                      marginBottom: '8px'
+                    }}>
+                      Suicide prevention helpline serving Tamil Nadu
+                    </h3>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      fontSize: '12px',
+                      color: '#6b7280'
+                    }}>
+                      <span>⏰ 24/7</span>
+                      <span>🗣️ Tamil, English, Hindi</span>
                     </div>
                   </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                  📍 Select Your State
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  Choose your state from the dropdown above to see local mental health resources and helplines.
-                </p>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-sm text-yellow-800">
-                    💡 <strong>Tip:</strong> Even if your state isn't listed, the national helplines above are available to you 24/7.
-                  </p>
+                  <a
+                    href="tel:044-24640050"
+                    style={{
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginLeft: '16px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+                  >
+                    📞 Call
+                  </a>
+                </div>
+                <div>
+                  <a
+                    href="tel:044-24640050"
+                    style={{
+                      color: '#3b82f6',
+                      fontFamily: 'monospace',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    044-24640050
+                  </a>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Important Information */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-xl font-semibold text-blue-800 mb-4">
-            💙 Important Information
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-700">
-            <div>
-              <h4 className="font-semibold mb-2">✅ What to Expect:</h4>
-              <ul className="space-y-1">
-                <li>• Confidential and non-judgmental support</li>
-                <li>• Trained counselors who understand Indian culture</li>
-                <li>• Free or low-cost services</li>
-                <li>• Support in multiple Indian languages</li>
-              </ul>
+              <div style={{
+                borderLeft: '4px solid #8b5cf6',
+                paddingLeft: '20px',
+                paddingTop: '16px',
+                paddingBottom: '16px',
+                backgroundColor: '#f5f3ff',
+                borderRadius: '0 12px 12px 0'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      color: '#1a202c',
+                      marginBottom: '8px'
+                    }}>
+                      Mental health counseling and support
+                    </h3>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      fontSize: '12px',
+                      color: '#6b7280'
+                    }}>
+                      <span>⏰ 8 AM - 8 PM</span>
+                      <span>🗣️ Tamil, English</span>
+                    </div>
+                  </div>
+                  <a
+                    href="tel:0422-2544042"
+                    style={{
+                      backgroundColor: '#8b5cf6',
+                      color: 'white',
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginLeft: '16px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7c3aed'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8b5cf6'}
+                  >
+                    📞 Call
+                  </a>
+                </div>
+                <div>
+                  <a
+                    href="tel:0422-2544042"
+                    style={{
+                      color: '#8b5cf6',
+                      fontFamily: 'monospace',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    0422-2544042
+                  </a>
+                </div>
+              </div>
+
+              <div style={{
+                borderLeft: '4px solid #f59e0b',
+                paddingLeft: '20px',
+                paddingTop: '16px',
+                paddingBottom: '16px',
+                backgroundColor: '#fffbeb',
+                borderRadius: '0 12px 12px 0'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      color: '#1a202c',
+                      marginBottom: '8px'
+                    }}>
+                      Specialized support for Tamil youth and students
+                    </h3>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      fontSize: '12px',
+                      color: '#6b7280'
+                    }}>
+                      <span>⏰ 10 AM - 7 PM</span>
+                      <span>🗣️ Tamil, English</span>
+                    </div>
+                  </div>
+                  <a
+                    href="tel:044-28512345"
+                    style={{
+                      backgroundColor: '#f59e0b',
+                      color: 'white',
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginLeft: '16px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}
+                  >
+                    📞 Call
+                  </a>
+                </div>
+                <div>
+                  <a
+                    href="tel:044-28512345"
+                    style={{
+                      color: '#f59e0b',
+                      fontFamily: 'monospace',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    044-28512345
+                  </a>
+                </div>
+              </div>
             </div>
-            <div>
-              <h4 className="font-semibold mb-2">🔒 Your Privacy:</h4>
-              <ul className="space-y-1">
-                <li>• All calls are completely confidential</li>
-                <li>• No caller ID or recording without consent</li>
-                <li>• You can remain anonymous</li>
-                <li>• Information is not shared with family/school</li>
-              </ul>
+
+            {/* Hospitals */}
+            <div style={{
+              marginTop: '32px',
+              padding: '20px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0'
+            }}>
+              <h4 style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: '#1a202c',
+                marginBottom: '12px'
+              }}>
+                🏥 Hospitals:
+              </h4>
+              <p style={{
+                color: '#4a5568',
+                fontSize: '14px',
+                lineHeight: '1.6',
+                margin: 0
+              }}>
+                Government General Hospital Chennai, Madras Medical College, Apollo Hospitals
+              </p>
             </div>
-          </div>
-          <div className="mt-4 p-3 bg-white rounded border border-blue-200">
-            <p className="text-blue-800 font-medium">
-              🌟 Remember: Seeking help is a sign of strength, not weakness. Mental health care is healthcare, and you deserve support.
-            </p>
           </div>
         </div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer style={{
+        backgroundColor: '#2d3748',
+        color: '#e2e8f0',
+        padding: '40px 20px',
+        textAlign: 'center'
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <p style={{ 
+            margin: 0,
+            fontSize: '14px',
+            opacity: 0.8
+          }}>
+            © 2024 SoulSync Mental Wellness Platform. All rights reserved. | 
+            Your mental health support is just a call away.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

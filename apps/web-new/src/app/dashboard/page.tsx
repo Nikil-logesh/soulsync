@@ -20,16 +20,35 @@ export const dynamic = 'force-dynamic';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, loading } = useSafeAuth();
+  const { user, userRole, loading } = useSafeAuth();
+
+  // Redirect to signin if not authenticated
+  useEffect(() => {
+    // Only redirect if loading is complete and user is definitely not authenticated
+    if (!loading && !user) {
+      router.push('/signin');
+    }
+  }, [user, loading, router]);
 
   // Show loading state
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '256px'
+      }}>
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full"
+          style={{
+            width: '64px',
+            height: '64px',
+            border: '4px solid #2563eb',
+            borderTop: '4px solid transparent',
+            borderRadius: '50%'
+          }}
         />
       </div>
     );
@@ -71,38 +90,93 @@ export default function DashboardPage() {
   const anonymousName = user?.email ? generateAnonymousName(user.email) : 'GuestUser123';
 
   return (
-    <div className="max-w-6xl mx-auto px-4 relative min-h-screen">
+    <div style={{
+      maxWidth: '1200px',
+      margin: '0 auto',
+      padding: '0 20px',
+      position: 'relative',
+      minHeight: '100vh',
+      fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+    }}>
       {/* Background gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-100 via-purple-100 to-pink-100 -z-10 rounded-2xl"></div>
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'linear-gradient(180deg, #dbeafe 0%, #e5d3ff 50%, #fce7f3 100%)',
+        zIndex: -10,
+        borderRadius: '16px'
+      }}></div>
       
       {/* Welcome Header */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-2xl p-8 mb-8 shadow-2xl relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #ec4899 100%)',
+          color: 'white',
+          borderRadius: '16px',
+          padding: '32px',
+          marginBottom: '32px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
       >
         {/* Floating decorations */}
         <motion.div
           animate={{ x: [0, 20, -20, 0], y: [0, 10, -10, 0] }}
           transition={{ repeat: Infinity, duration: 12 }}
-          className="absolute w-32 h-32 bg-white opacity-10 rounded-full top-4 right-4 blur-2xl"
+          style={{
+            position: 'absolute',
+            width: '128px',
+            height: '128px',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '50%',
+            top: '16px',
+            right: '16px',
+            filter: 'blur(40px)'
+          }}
         />
         
-        <div className="flex items-center space-x-6 relative z-10">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '24px',
+          position: 'relative',
+          zIndex: 10
+        }}>
           <motion.div 
             whileHover={{ scale: 1.05 }}
             animate={{ rotate: [0, 5, -5, 0] }}
             transition={{ rotate: { repeat: Infinity, duration: 4 } }}
-            className="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center border-4 border-white border-opacity-30 backdrop-blur-sm"
+            style={{
+              width: '80px',
+              height: '80px',
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '4px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(10px)'
+            }}
           >
-            <UserIcon className="w-10 h-10 text-white" />
+            <UserIcon style={{ width: '40px', height: '40px', color: 'white' }} />
           </motion.div>
           <div>
             <motion.h1 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-4xl font-bold mb-2"
+              style={{
+                fontSize: '36px',
+                fontWeight: '700',
+                marginBottom: '8px',
+                margin: 0
+              }}
             >
               Welcome back!
             </motion.h1>
@@ -110,7 +184,12 @@ export default function DashboardPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-xl opacity-90 mb-3"
+              style={{
+                fontSize: '20px',
+                opacity: 0.9,
+                marginBottom: '12px',
+                margin: 0
+              }}
             >
               Hello, {anonymousName}
             </motion.p>
@@ -118,13 +197,23 @@ export default function DashboardPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex items-center"
+              style={{
+                display: 'flex',
+                alignItems: 'center'
+              }}
             >
-              <span className={`px-4 py-2 text-sm rounded-full backdrop-blur-sm ${
-                institutionType === 'educational' 
-                  ? 'bg-blue-500 bg-opacity-30 border border-blue-300' 
-                  : 'bg-gray-500 bg-opacity-30 border border-gray-300'
-              }`}>
+              <span style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                borderRadius: '20px',
+                backdropFilter: 'blur(10px)',
+                backgroundColor: institutionType === 'educational' 
+                  ? 'rgba(59, 130, 246, 0.3)' 
+                  : 'rgba(107, 114, 128, 0.3)',
+                border: institutionType === 'educational'
+                  ? '1px solid rgba(147, 197, 253, 1)'
+                  : '1px solid rgba(156, 163, 175, 1)'
+              }}>
                 {institution}
               </span>
             </motion.div>
@@ -137,7 +226,12 @@ export default function DashboardPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '24px',
+          marginBottom: '32px'
+        }}
       >
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -147,23 +241,58 @@ export default function DashboardPage() {
         >
           <Link 
             href="/prompt" 
-            className="block bg-gradient-to-br from-emerald-500 via-green-500 to-teal-500 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all h-full min-h-[140px] relative overflow-hidden"
+            style={{
+              display: 'block',
+              background: 'linear-gradient(135deg, #10b981 0%, #22c55e 50%, #14b8a6 100%)',
+              color: 'white',
+              padding: '24px',
+              borderRadius: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              textDecoration: 'none',
+              height: '100%',
+              minHeight: '140px',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.3s ease'
+            }}
           >
             <motion.div
               animate={{ x: [0, 15, -15, 0] }}
               transition={{ repeat: Infinity, duration: 8 }}
-              className="absolute w-24 h-24 bg-white opacity-10 rounded-full top-2 right-2 blur-xl"
+              style={{
+                position: 'absolute',
+                width: '96px',
+                height: '96px',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '50%',
+                top: '8px',
+                right: '8px',
+                filter: 'blur(20px)'
+              }}
             />
-            <div className="flex flex-col h-full relative z-10 justify-between">
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              position: 'relative',
+              zIndex: 10,
+              justifyContent: 'space-between'
+            }}>
               <motion.div 
                 whileHover={{ rotate: 15 }}
-                className="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm w-fit"
+                style={{
+                  padding: '12px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '12px',
+                  backdropFilter: 'blur(10px)',
+                  width: 'fit-content'
+                }}
               >
-                <ChatBubbleLeftIcon className="w-6 h-6 text-white" />
+                <ChatBubbleLeftIcon style={{ width: '24px', height: '24px', color: 'white' }} />
               </motion.div>
               <div>
-                <h3 className="font-bold text-lg mb-1">💬 AI Chat</h3>
-                <p className="text-sm opacity-90">Talk with SoulSync</p>
+                <h3 style={{ fontWeight: '700', fontSize: '18px', marginBottom: '4px' }}>💬 AI Chat</h3>
+                <p style={{ fontSize: '14px', opacity: 0.9 }}>Talk with SoulSync</p>
               </div>
             </div>
           </Link>
@@ -177,23 +306,58 @@ export default function DashboardPage() {
         >
           <Link 
             href="/screening" 
-            className="block bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all h-full min-h-[140px] relative overflow-hidden"
+            style={{
+              display: 'block',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
+              color: 'white',
+              padding: '24px',
+              borderRadius: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              textDecoration: 'none',
+              height: '100%',
+              minHeight: '140px',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.3s ease'
+            }}
           >
             <motion.div
               animate={{ x: [0, -10, 10, 0] }}
               transition={{ repeat: Infinity, duration: 10 }}
-              className="absolute w-20 h-20 bg-white opacity-10 rounded-full bottom-2 right-2 blur-xl"
+              style={{
+                position: 'absolute',
+                width: '80px',
+                height: '80px',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '50%',
+                bottom: '8px',
+                right: '8px',
+                filter: 'blur(20px)'
+              }}
             />
-            <div className="flex flex-col h-full relative z-10 justify-between">
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              position: 'relative',
+              zIndex: 10,
+              justifyContent: 'space-between'
+            }}>
               <motion.div 
                 whileHover={{ rotate: 15 }}
-                className="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm w-fit"
+                style={{
+                  padding: '12px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '12px',
+                  backdropFilter: 'blur(10px)',
+                  width: 'fit-content'
+                }}
               >
-                <ClipboardDocumentCheckIcon className="w-6 h-6 text-white" />
+                <ClipboardDocumentCheckIcon style={{ width: '24px', height: '24px', color: 'white' }} />
               </motion.div>
               <div>
-                <h3 className="font-bold text-lg mb-1">📋 Screening</h3>
-                <p className="text-sm opacity-90">Mental health assessments</p>
+                <h3 style={{ fontWeight: '700', fontSize: '18px', marginBottom: '4px' }}>📋 Screening</h3>
+                <p style={{ fontSize: '14px', opacity: 0.9 }}>Mental health assessments</p>
               </div>
             </div>
           </Link>
@@ -207,23 +371,58 @@ export default function DashboardPage() {
         >
           <Link 
             href="/resources" 
-            className="block bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all h-full min-h-[140px] relative overflow-hidden"
+            style={{
+              display: 'block',
+              background: 'linear-gradient(135deg, #f97316 0%, #f59e0b 50%, #eab308 100%)',
+              color: 'white',
+              padding: '24px',
+              borderRadius: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              textDecoration: 'none',
+              height: '100%',
+              minHeight: '140px',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.3s ease'
+            }}
           >
             <motion.div
               animate={{ x: [0, 12, -12, 0] }}
               transition={{ repeat: Infinity, duration: 9 }}
-              className="absolute w-28 h-28 bg-white opacity-10 rounded-full top-1 left-1 blur-xl"
+              style={{
+                position: 'absolute',
+                width: '112px',
+                height: '112px',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '50%',
+                top: '4px',
+                left: '4px',
+                filter: 'blur(20px)'
+              }}
             />
-            <div className="flex flex-col h-full relative z-10 justify-between">
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              position: 'relative',
+              zIndex: 10,
+              justifyContent: 'space-between'
+            }}>
               <motion.div 
                 whileHover={{ rotate: 15 }}
-                className="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm w-fit"
+                style={{
+                  padding: '12px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '12px',
+                  backdropFilter: 'blur(10px)',
+                  width: 'fit-content'
+                }}
               >
-                <BookOpenIcon className="w-6 h-6 text-white" />
+                <BookOpenIcon style={{ width: '24px', height: '24px', color: 'white' }} />
               </motion.div>
               <div>
-                <h3 className="font-bold text-lg mb-1">📚 Resources</h3>
-                <p className="text-sm opacity-90">Youth mental wellness hub</p>
+                <h3 style={{ fontWeight: '700', fontSize: '18px', marginBottom: '4px' }}>📚 Resources</h3>
+                <p style={{ fontSize: '14px', opacity: 0.9 }}>Youth mental wellness hub</p>
               </div>
             </div>
           </Link>
@@ -237,23 +436,58 @@ export default function DashboardPage() {
         >
           <Link 
             href="/helplines" 
-            className="block bg-gradient-to-br from-red-500 via-pink-500 to-rose-500 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all h-full min-h-[140px] relative overflow-hidden"
+            style={{
+              display: 'block',
+              background: 'linear-gradient(135deg, #ef4444 0%, #ec4899 50%, #f43f5e 100%)',
+              color: 'white',
+              padding: '24px',
+              borderRadius: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              textDecoration: 'none',
+              height: '100%',
+              minHeight: '140px',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.3s ease'
+            }}
           >
             <motion.div
               animate={{ x: [0, 10, -10, 0] }}
               transition={{ repeat: Infinity, duration: 7 }}
-              className="absolute w-24 h-24 bg-white opacity-10 rounded-full top-2 right-2 blur-xl"
+              style={{
+                position: 'absolute',
+                width: '96px',
+                height: '96px',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '50%',
+                top: '8px',
+                right: '8px',
+                filter: 'blur(20px)'
+              }}
             />
-            <div className="flex flex-col h-full relative z-10 justify-between">
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              position: 'relative',
+              zIndex: 10,
+              justifyContent: 'space-between'
+            }}>
               <motion.div 
                 whileHover={{ rotate: 15 }}
-                className="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm w-fit"
+                style={{
+                  padding: '12px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '12px',
+                  backdropFilter: 'blur(10px)',
+                  width: 'fit-content'
+                }}
               >
-                <span className="text-2xl">📞</span>
+                <span style={{ fontSize: '24px' }}>📞</span>
               </motion.div>
               <div>
-                <h3 className="font-bold text-lg mb-1">📞 Helplines</h3>
-                <p className="text-sm opacity-90">Crisis support & counseling</p>
+                <h3 style={{ fontWeight: '700', fontSize: '18px', marginBottom: '4px' }}>📞 Helplines</h3>
+                <p style={{ fontSize: '14px', opacity: 0.9 }}>Crisis support & counseling</p>
               </div>
             </div>
           </Link>
@@ -267,23 +501,58 @@ export default function DashboardPage() {
         >
           <Link 
             href="/profile" 
-            className="block bg-gradient-to-br from-purple-500 via-violet-500 to-indigo-500 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all h-full min-h-[140px] relative overflow-hidden"
+            style={{
+              display: 'block',
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%)',
+              color: 'white',
+              padding: '24px',
+              borderRadius: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              textDecoration: 'none',
+              height: '100%',
+              minHeight: '140px',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.3s ease'
+            }}
           >
             <motion.div
               animate={{ x: [0, 8, -8, 0] }}
               transition={{ repeat: Infinity, duration: 11 }}
-              className="absolute w-32 h-32 bg-white opacity-10 rounded-full bottom-2 right-2 blur-xl"
+              style={{
+                position: 'absolute',
+                width: '128px',
+                height: '128px',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '50%',
+                bottom: '8px',
+                right: '8px',
+                filter: 'blur(20px)'
+              }}
             />
-            <div className="flex flex-col h-full relative z-10 justify-between">
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              position: 'relative',
+              zIndex: 10,
+              justifyContent: 'space-between'
+            }}>
               <motion.div 
                 whileHover={{ rotate: 15 }}
-                className="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm w-fit"
+                style={{
+                  padding: '12px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '12px',
+                  backdropFilter: 'blur(10px)',
+                  width: 'fit-content'
+                }}
               >
-                <UserIcon className="w-6 h-6 text-white" />
+                <UserIcon style={{ width: '24px', height: '24px', color: 'white' }} />
               </motion.div>
               <div>
-                <h3 className="font-bold text-lg mb-1">👤 Profile</h3>
-                <p className="text-sm opacity-90">Manage settings</p>
+                <h3 style={{ fontWeight: '700', fontSize: '18px', marginBottom: '4px' }}>👤 Profile</h3>
+                <p style={{ fontSize: '14px', opacity: 0.9 }}>Manage settings</p>
               </div>
             </div>
           </Link>
@@ -295,68 +564,248 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8 }}
-        className="grid md:grid-cols-2 gap-6 mb-8"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: '24px',
+          marginBottom: '32px',
+          alignItems: 'stretch'
+        }}
       >
         {/* Screening Section */}
-        <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-purple-200 border-opacity-20">
-          <div className="flex items-center mb-4">
-            <div className="p-3 bg-purple-500 rounded-xl mr-4">
-              <ClipboardDocumentCheckIcon className="w-6 h-6 text-white" />
+        <div style={{
+          background: 'linear-gradient(135deg, #faf5ff 0%, #eff6ff 50%, #eef2ff 100%)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '16px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          padding: '24px',
+          border: '1px solid rgba(196, 181, 253, 0.2)',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '320px'
+        }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                padding: '12px',
+                backgroundColor: '#8b5cf6',
+                borderRadius: '12px',
+                marginRight: '16px'
+              }}>
+                <ClipboardDocumentCheckIcon style={{ width: '24px', height: '24px', color: 'white' }} />
+              </div>
+              <div>
+                <h3 style={{
+                  fontSize: '20px',
+                  fontWeight: '700',
+                  color: '#1f2937',
+                  margin: 0
+                }}>Mental Health Screening</h3>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#4b5563',
+                  margin: 0
+                }}>Take validated assessments</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">Mental Health Screening</h3>
-              <p className="text-sm text-gray-600">Take validated assessments</p>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              marginBottom: '16px',
+              flex: 1
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px',
+                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                borderRadius: '8px'
+              }}>
+                <div>
+                  <span style={{
+                    fontWeight: '500',
+                    color: '#1f2937'
+                  }}>PHQ-9</span>
+                  <p style={{
+                    fontSize: '12px',
+                    color: '#4b5563',
+                    margin: 0
+                  }}>Depression screening</p>
+                </div>
+                <span style={{
+                  fontSize: '12px',
+                  backgroundColor: '#dbeafe',
+                  color: '#1e40af',
+                  padding: '4px 8px',
+                  borderRadius: '20px'
+                }}>9 questions</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px',
+                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                borderRadius: '8px'
+              }}>
+                <div>
+                  <span style={{
+                    fontWeight: '500',
+                    color: '#1f2937'
+                  }}>GAD-7</span>
+                  <p style={{
+                    fontSize: '12px',
+                    color: '#4b5563',
+                    margin: 0
+                  }}>Anxiety screening</p>
+                </div>
+                <span style={{
+                  fontSize: '12px',
+                  backgroundColor: '#dcfce7',
+                  color: '#166534',
+                  padding: '4px 8px',
+                  borderRadius: '20px'
+                }}>7 questions</span>
+              </div>
             </div>
           </div>
-          <div className="space-y-3 mb-4">
-            <div className="flex items-center justify-between p-3 bg-white bg-opacity-50 rounded-lg">
-              <div>
-                <span className="font-medium text-gray-800">PHQ-9</span>
-                <p className="text-xs text-gray-600">Depression screening</p>
-              </div>
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">9 questions</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-white bg-opacity-50 rounded-lg">
-              <div>
-                <span className="font-medium text-gray-800">GAD-7</span>
-                <p className="text-xs text-gray-600">Anxiety screening</p>
-              </div>
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">7 questions</span>
-            </div>
-          </div>
-          <Link href="/screening" className="block w-full bg-purple-600 text-white text-center py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors">
+          <Link href="/screening" style={{
+            display: 'block',
+            width: '100%',
+            backgroundColor: '#8b5cf6',
+            color: 'white',
+            textAlign: 'center',
+            padding: '12px',
+            borderRadius: '8px',
+            fontWeight: '500',
+            textDecoration: 'none',
+            transition: 'background-color 0.2s ease',
+            marginTop: 'auto'
+          }}>
             Start Assessment
           </Link>
         </div>
 
         {/* Resources Section */}
-        <div className="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-orange-200 border-opacity-20">
-          <div className="flex items-center mb-4">
-            <div className="p-3 bg-orange-500 rounded-xl mr-4">
-              <PlayIcon className="w-6 h-6 text-white" />
+        <div style={{
+          background: 'linear-gradient(135deg, #fffbf0 0%, #fef3c7 50%, #fef9c3 100%)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '16px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          padding: '24px',
+          border: '1px solid rgba(251, 191, 36, 0.2)',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '320px'
+        }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                padding: '12px',
+                backgroundColor: '#f97316',
+                borderRadius: '12px',
+                marginRight: '16px'
+              }}>
+                <PlayIcon style={{ width: '24px', height: '24px', color: 'white' }} />
+              </div>
+              <div>
+                <h3 style={{
+                  fontSize: '20px',
+                  fontWeight: '700',
+                  color: '#1f2937',
+                  margin: 0
+                }}>Wellness Resources</h3>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#4b5563',
+                  margin: 0
+                }}>Videos, audio, and guides</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">Wellness Resources</h3>
-              <p className="text-sm text-gray-600">Videos, audio, and guides</p>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              marginBottom: '16px',
+              flex: 1
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px',
+                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                borderRadius: '8px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ marginRight: '8px' }}>🎥</span>
+                  <span style={{
+                    fontWeight: '500',
+                    color: '#1f2937'
+                  }}>Mental Health Videos</span>
+                </div>
+                <span style={{
+                  fontSize: '12px',
+                  backgroundColor: '#fed7aa',
+                  color: '#9a3412',
+                  padding: '4px 8px',
+                  borderRadius: '20px'
+                }}>Regional</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px',
+                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                borderRadius: '8px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ marginRight: '8px' }}>🎧</span>
+                  <span style={{
+                    fontWeight: '500',
+                    color: '#1f2937'
+                  }}>Guided Meditations</span>
+                </div>
+                <span style={{
+                  fontSize: '12px',
+                  backgroundColor: '#dcfce7',
+                  color: '#166534',
+                  padding: '4px 8px',
+                  borderRadius: '20px'
+                }}>Audio</span>
+              </div>
             </div>
           </div>
-          <div className="space-y-3 mb-4">
-            <div className="flex items-center justify-between p-3 bg-white bg-opacity-50 rounded-lg">
-              <div className="flex items-center">
-                <span className="mr-2">🎥</span>
-                <span className="font-medium text-gray-800">Mental Health Videos</span>
-              </div>
-              <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">Regional</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-white bg-opacity-50 rounded-lg">
-              <div className="flex items-center">
-                <span className="mr-2">🎧</span>
-                <span className="font-medium text-gray-800">Guided Meditations</span>
-              </div>
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Audio</span>
-            </div>
-          </div>
-          <Link href="/resources" className="block w-full bg-orange-600 text-white text-center py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors">
+          <Link href="/resources" style={{
+            display: 'block',
+            width: '100%',
+            backgroundColor: '#ea580c',
+            color: 'white',
+            textAlign: 'center',
+            padding: '12px',
+            borderRadius: '8px',
+            fontWeight: '500',
+            textDecoration: 'none',
+            transition: 'background-color 0.2s ease',
+            marginTop: 'auto'
+          }}>
             Explore Resources
           </Link>
         </div>
@@ -367,28 +816,75 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.9 }}
-        className="bg-gradient-to-br from-white via-blue-50 to-purple-50 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white border-opacity-20 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #faf5ff 100%)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '16px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          padding: '32px',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
       >
         <motion.div
           animate={{ x: [0, 25, -25, 0], y: [0, 15, -15, 0] }}
           transition={{ repeat: Infinity, duration: 15 }}
-          className="absolute w-40 h-40 bg-gradient-to-r from-blue-200 to-purple-200 opacity-20 rounded-full top-4 right-4 blur-2xl"
+          style={{
+            position: 'absolute',
+            width: '160px',
+            height: '160px',
+            background: 'linear-gradient(135deg, #bfdbfe 0%, #ddd6fe 100%)',
+            opacity: 0.2,
+            borderRadius: '50%',
+            top: '16px',
+            right: '16px',
+            filter: 'blur(40px)'
+          }}
         />
         
-        <h2 className="text-3xl font-bold mb-8 text-gray-800 relative z-10">Your Wellness Journey</h2>
-        <div className="text-center py-12 relative z-10">
+        <h2 style={{
+          fontSize: '30px',
+          fontWeight: '700',
+          marginBottom: '32px',
+          color: '#1f2937',
+          position: 'relative',
+          zIndex: 10
+        }}>Your Wellness Journey</h2>
+        <div style={{
+          textAlign: 'center',
+          padding: '48px 0',
+          position: 'relative',
+          zIndex: 10
+        }}>
           <motion.div 
             whileHover={{ scale: 1.1, rotate: 180 }}
             transition={{ duration: 0.3 }}
-            className="mx-auto w-24 h-24 bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 rounded-full flex items-center justify-center mb-6 shadow-lg"
+            style={{
+              margin: '0 auto',
+              width: '96px',
+              height: '96px',
+              background: 'linear-gradient(135deg, #bfdbfe 0%, #ddd6fe 50%, #fce7f3 100%)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '24px',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+            }}
           >
-            <PlusIcon className="w-12 h-12 text-gray-600" />
+            <PlusIcon style={{ width: '48px', height: '48px', color: '#4b5563' }} />
           </motion.div>
           <motion.h3 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.1 }}
-            className="text-2xl font-semibold text-gray-800 mb-4"
+            style={{
+              fontSize: '24px',
+              fontWeight: '600',
+              color: '#1f2937',
+              marginBottom: '16px'
+            }}
           >
             Start Your Wellness Journey
           </motion.h3>
@@ -396,7 +892,13 @@ export default function DashboardPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
-            className="text-gray-600 mb-8 max-w-lg mx-auto leading-relaxed"
+            style={{
+              color: '#4b5563',
+              marginBottom: '32px',
+              maxWidth: '512px',
+              margin: '0 auto 32px',
+              lineHeight: '1.6'
+            }}
           >
             Begin by chatting with our AI companion and building healthy mental wellness habits.
           </motion.p>
@@ -404,14 +906,32 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.3 }}
-            className="flex justify-center"
+            style={{
+              display: 'flex',
+              justifyContent: 'center'
+            }}
           >
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link 
                 href="/prompt" 
-                className="flex items-center justify-center space-x-3 px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg hover:shadow-xl font-medium h-14 w-full sm:w-auto min-w-[200px]"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  padding: '16px 32px',
+                  background: 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)',
+                  color: 'white',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  fontWeight: '500',
+                  height: '56px',
+                  minWidth: '200px'
+                }}
               >
-                <ChatBubbleLeftIcon className="w-5 h-5" />
+                <ChatBubbleLeftIcon style={{ width: '20px', height: '20px' }} />
                 <span>Start Chatting</span>
               </Link>
             </motion.div>
@@ -423,12 +943,34 @@ export default function DashboardPage() {
       <motion.div
         animate={{ x: [0, 30, -30, 0], y: [0, 20, -20, 0] }}
         transition={{ repeat: Infinity, duration: 15 }}
-        className="fixed w-96 h-96 bg-blue-200 opacity-5 rounded-full top-10 right-10 blur-3xl -z-50"
+        style={{
+          position: 'fixed',
+          width: '384px',
+          height: '384px',
+          backgroundColor: '#bfdbfe',
+          opacity: 0.05,
+          borderRadius: '50%',
+          top: '40px',
+          right: '40px',
+          filter: 'blur(60px)',
+          zIndex: -50
+        }}
       />
       <motion.div
         animate={{ x: [0, -25, 25, 0], y: [0, -15, 15, 0] }}
         transition={{ repeat: Infinity, duration: 18 }}
-        className="fixed w-80 h-80 bg-purple-200 opacity-5 rounded-full bottom-10 left-10 blur-3xl -z-50"
+        style={{
+          position: 'fixed',
+          width: '320px',
+          height: '320px',
+          backgroundColor: '#ddd6fe',
+          opacity: 0.05,
+          borderRadius: '50%',
+          bottom: '40px',
+          left: '40px',
+          filter: 'blur(60px)',
+          zIndex: -50
+        }}
       />
     </div>
   );

@@ -18,34 +18,32 @@ export default function SilentLocationDetector() {
   const { user, loading } = useSafeAuth();
   const { location, saveLocation } = useLocation();
 
-  // Silent reverse geocoding function using our proxy API
+  // Silent reverse geocoding function using server-side API (no CORS issues)
   const silentReverseGeocode = async (lat: number, lng: number): Promise<LocationData> => {
     try {
-      const response = await fetch(
-        `/api/geocode?lat=${lat}&lon=${lng}`,
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Geocoding service unavailable');
-      }
-
-      const data = await response.json();
+      console.log('Performing geocoding for coordinates:', lat, lng);
       
-      if (!data || !data.address) {
-        throw new Error('Unable to determine location details');
+      const geoResponse = await fetch('/api/geocode', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          latitude: lat,
+          longitude: lng,
+        }),
+      });
+
+      if (!geoResponse.ok) {
+        throw new Error(`Geocoding failed: ${geoResponse.status}`);
       }
 
-      const address = data.address;
+      const locationData = await geoResponse.json();
       
       return {
-        country: address.country || 'Unknown',
-        state: address.state || address.region || address.province || 'Unknown',
-        city: address.city || address.town || address.village || address.municipality || 'Unknown',
+        city: locationData.city,
+        state: locationData.state,
+        country: locationData.country,
         latitude: lat,
         longitude: lng,
         accuracy: 0

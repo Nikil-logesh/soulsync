@@ -160,29 +160,65 @@ export default function GAD7Screening({ language = 'en', onComplete, onCancel }:
   const progress = ((currentQuestion + 1) / 7) * 100;
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
+    <div style={{
+      maxWidth: '512px',
+      margin: '0 auto',
+      padding: '24px',
+      fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+    }}>
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+      <div style={{
+        textAlign: 'center',
+        marginBottom: '32px'
+      }}>
+        <h1 style={{
+          fontSize: '30px',
+          fontWeight: '700',
+          color: '#1f2937',
+          marginBottom: '8px'
+        }}>
           GAD-7 Anxiety Screening
         </h1>
-        <p className="text-gray-600">
+        <p style={{
+          color: '#4b5563',
+          margin: 0
+        }}>
           Generalized Anxiety Disorder - 7 items
         </p>
-        <p className="text-sm text-gray-500 mt-2">
+        <p style={{
+          fontSize: '14px',
+          color: '#6b7280',
+          marginTop: '8px',
+          margin: '8px 0 0 0'
+        }}>
           This questionnaire helps assess anxiety symptoms over the past 2 weeks
         </p>
       </div>
 
       {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
+      <div style={{ marginBottom: '32px' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: '14px',
+          color: '#4b5563',
+          marginBottom: '8px'
+        }}>
           <span>Question {currentQuestion + 1} of 7</span>
           <span>{Math.round(progress)}% Complete</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
+        <div style={{
+          width: '100%',
+          backgroundColor: '#e5e7eb',
+          borderRadius: '20px',
+          height: '12px'
+        }}>
           <motion.div
-            className="bg-gradient-to-r from-green-500 to-teal-500 h-3 rounded-full"
+            style={{
+              background: 'linear-gradient(135deg, #22c55e 0%, #14b8a6 100%)',
+              height: '12px',
+              borderRadius: '20px'
+            }}
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }}
@@ -198,45 +234,87 @@ export default function GAD7Screening({ language = 'en', onComplete, onCancel }:
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
-          className="bg-white rounded-2xl shadow-lg p-8 mb-6"
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            padding: '32px',
+            marginBottom: '24px'
+          }}
         >
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <div style={{ marginBottom: '24px' }}>
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#1f2937',
+              marginBottom: '16px'
+            }}>
               Over the last 2 weeks, how often have you been bothered by:
             </h2>
-            <p className="text-lg text-gray-700 leading-relaxed">
+            <p style={{
+              fontSize: '18px',
+              color: '#374151',
+              lineHeight: '1.6'
+            }}>
               {getQuestionText(GAD7_QUESTIONS[currentQuestion])}
             </p>
           </div>
 
           {/* Answer Options */}
-          <div className="space-y-3">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
             {OPTIONS.map((option) => (
               <motion.button
                 key={option.value}
                 onClick={() => handleAnswer(option.value)}
-                className={`w-full p-4 text-left border-2 rounded-xl transition-all ${
-                  answers[currentQuestion] === option.value
-                    ? 'border-green-500 bg-green-50 shadow-md'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}
+                style={{
+                  width: '100%',
+                  padding: '16px',
+                  textAlign: 'left',
+                  border: answers[currentQuestion] === option.value ? '2px solid #22c55e' : '2px solid #e5e7eb',
+                  borderRadius: '12px',
+                  backgroundColor: answers[currentQuestion] === option.value ? '#f0fdf4' : 'transparent',
+                  boxShadow: answers[currentQuestion] === option.value ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none',
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer'
+                }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-800">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <span style={{
+                    fontWeight: '500',
+                    color: '#1f2937'
+                  }}>
                     {getOptionText(option)}
                   </span>
-                  <div className={`w-5 h-5 rounded-full border-2 ${
-                    answers[currentQuestion] === option.value
-                      ? 'border-green-500 bg-green-500'
-                      : 'border-gray-300'
-                  }`}>
+                  <div style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    border: answers[currentQuestion] === option.value ? '2px solid #22c55e' : '2px solid #d1d5db',
+                    backgroundColor: answers[currentQuestion] === option.value ? '#22c55e' : 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
                     {answers[currentQuestion] === option.value && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-2 h-2 bg-white rounded-full m-0.5"
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          backgroundColor: 'white',
+                          borderRadius: '50%'
+                        }}
                       />
                     )}
                   </div>
@@ -248,26 +326,54 @@ export default function GAD7Screening({ language = 'en', onComplete, onCancel }:
       </AnimatePresence>
 
       {/* Navigation */}
-      <div className="flex justify-between items-center">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button
           onClick={goToPrevious}
           disabled={currentQuestion === 0}
-          className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          style={{
+            padding: '12px 24px',
+            border: '1px solid #d1d5db',
+            borderRadius: '8px',
+            color: '#374151',
+            backgroundColor: 'white',
+            cursor: currentQuestion === 0 ? 'not-allowed' : 'pointer',
+            opacity: currentQuestion === 0 ? 0.5 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontSize: '14px',
+            fontWeight: '500',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            if (currentQuestion !== 0) {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (currentQuestion !== 0) {
+              e.currentTarget.style.backgroundColor = 'white';
+            }
+          }}
         >
           ← Previous
         </button>
 
-        <div className="flex space-x-2">
+        <div style={{ display: 'flex', gap: '8px' }}>
           {Array.from({ length: 7 }, (_, i) => (
             <div
               key={i}
-              className={`w-3 h-3 rounded-full ${
-                i < currentQuestion
-                  ? 'bg-green-500'
-                  : i === currentQuestion
-                  ? 'bg-teal-500'
-                  : 'bg-gray-300'
-              }`}
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                backgroundColor:
+                  i < currentQuestion
+                    ? '#22c55e'
+                    : i === currentQuestion
+                    ? '#14b8a6'
+                    : '#d1d5db'
+              }}
             />
           ))}
         </div>
@@ -275,7 +381,24 @@ export default function GAD7Screening({ language = 'en', onComplete, onCancel }:
         {onCancel && (
           <button
             onClick={onCancel}
-            className="px-6 py-3 border border-red-300 rounded-lg text-red-600 hover:bg-red-50"
+            style={{
+              padding: '12px 24px',
+              border: '1px solid #fca5a5',
+              borderRadius: '8px',
+              color: '#dc2626',
+              backgroundColor: 'white',
+              cursor: 'pointer',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#fef2f2';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'white';
+            }}
           >
             Cancel
           </button>
@@ -283,8 +406,20 @@ export default function GAD7Screening({ language = 'en', onComplete, onCancel }:
       </div>
 
       {/* Disclaimer */}
-      <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
+      <div style={{
+        marginTop: '32px',
+        padding: '16px',
+        backgroundColor: '#eff6ff',
+        border: '1px solid #bfdbfe',
+        borderRadius: '8px'
+      }}>
+        <p style={{
+          fontSize: '14px',
+          color: '#1e40af',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          lineHeight: '1.5',
+          margin: 0
+        }}>
           <strong>Disclaimer:</strong> This screening tool is for informational purposes only and does not replace professional medical diagnosis. If you're experiencing severe anxiety symptoms, please seek professional mental health support.
         </p>
       </div>

@@ -10,8 +10,8 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   transpilePackages: ["@repo/ui"],
-  // Note: output: "export" disabled for development testing with middleware
-  // Enable for deployment: output: "export",
+  // Enable static export for Firebase hosting
+  output: "export",
   trailingSlash: true,
   images: {
     unoptimized: true, // Required for static export
