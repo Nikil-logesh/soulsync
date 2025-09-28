@@ -1,8 +1,8 @@
 'use client';
 
 import { ReactNode } from "react";
-import AuthProvider from "@/components/AuthProvider";
-import Navbar from "@/components/Navbar";
+import AuthProvider from "../../components/AuthProvider";
+import Navbar from "../../components/Navbar";
 import LocationAwareLayout from "../../components/LocationAwareLayout";
 
 export default function PromptLayout({ children }: { children: ReactNode }) {

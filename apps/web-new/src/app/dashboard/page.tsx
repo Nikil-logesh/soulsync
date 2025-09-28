@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
@@ -21,6 +21,46 @@ export const dynamic = 'force-dynamic';
 export default function DashboardPage() {
   const router = useRouter();
   const { user, userRole, loading } = useSafeAuth();
+  
+  // Define mood type
+  type Mood = {
+    id: string;
+    emoji: string;
+    label: string;
+    color: string;
+  };
+  
+  const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
+  const [showMoodAnimation, setShowMoodAnimation] = useState(false);
+
+  // Mood options
+  const moods: Mood[] = [
+    { id: 'happy', emoji: '😊', label: 'Happy', color: '#FFD93D' },
+    { id: 'anxious', emoji: '😰', label: 'Anxious', color: '#FF6B6B' },
+    { id: 'angry', emoji: '😠', label: 'Angry', color: '#FF4757' },
+    { id: 'demotivated', emoji: '😞', label: 'Demotivated', color: '#A0A0A0' },
+    { id: 'worthless', emoji: '😔', label: 'Worthless', color: '#74B9FF' },
+    { id: 'sad', emoji: '😢', label: 'Sad', color: '#A29BFE' }
+  ];
+
+  // Handle mood selection
+  const handleMoodSelect = (mood: Mood) => {
+    setSelectedMood(mood);
+    setShowMoodAnimation(true);
+    
+    // Save mood to localStorage for AI chat context
+    localStorage.setItem('userCurrentMood', JSON.stringify({
+      mood: mood.id,
+      label: mood.label,
+      emoji: mood.emoji,
+      timestamp: new Date().toISOString()
+    }));
+
+    // Reset animation after 2 seconds
+    setTimeout(() => {
+      setShowMoodAnimation(false);
+    }, 2000);
+  };
 
   // Redirect to signin if not authenticated
   useEffect(() => {
@@ -91,887 +131,478 @@ export default function DashboardPage() {
 
   return (
     <div style={{
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: '0 20px',
-      position: 'relative',
+      display: 'flex',
       minHeight: '100vh',
+      backgroundColor: '#f8f9fa',
       fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Background gradient overlay */}
+      {/* Left Sidebar */}
       <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'linear-gradient(180deg, #dbeafe 0%, #e5d3ff 50%, #fce7f3 100%)',
-        zIndex: -10,
-        borderRadius: '16px'
-      }}></div>
-      
-      {/* Welcome Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{
-          background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #ec4899 100%)',
-          color: 'white',
-          borderRadius: '16px',
-          padding: '32px',
-          marginBottom: '32px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Floating decorations */}
-        <motion.div
-          animate={{ x: [0, 20, -20, 0], y: [0, 10, -10, 0] }}
-          transition={{ repeat: Infinity, duration: 12 }}
-          style={{
-            position: 'absolute',
-            width: '128px',
-            height: '128px',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '50%',
-            top: '16px',
-            right: '16px',
-            filter: 'blur(40px)'
-          }}
-        />
-        
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '24px',
-          position: 'relative',
-          zIndex: 10
-        }}>
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ rotate: { repeat: Infinity, duration: 4 } }}
-            style={{
-              width: '80px',
-              height: '80px',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '4px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(10px)'
-            }}
-          >
-            <UserIcon style={{ width: '40px', height: '40px', color: 'white' }} />
-          </motion.div>
-          <div>
-            <motion.h1 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              style={{
-                fontSize: '36px',
-                fontWeight: '700',
-                marginBottom: '8px',
-                margin: 0
-              }}
-            >
-              Welcome back!
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              style={{
-                fontSize: '20px',
-                opacity: 0.9,
-                marginBottom: '12px',
-                margin: 0
-              }}
-            >
-              Hello, {anonymousName}
-            </motion.p>
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              style={{
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <span style={{
-                padding: '8px 16px',
-                fontSize: '14px',
-                borderRadius: '20px',
-                backdropFilter: 'blur(10px)',
-                backgroundColor: institutionType === 'educational' 
-                  ? 'rgba(59, 130, 246, 0.3)' 
-                  : 'rgba(107, 114, 128, 0.3)',
-                border: institutionType === 'educational'
-                  ? '1px solid rgba(147, 197, 253, 1)'
-                  : '1px solid rgba(156, 163, 175, 1)'
-              }}>
-                {institution}
-              </span>
-            </motion.div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Quick Actions */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '24px',
-          marginBottom: '32px'
-        }}
-      >
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          whileHover={{ y: -5, scale: 1.02 }}
-        >
-          <Link 
-            href="/prompt" 
-            style={{
-              display: 'block',
-              background: 'linear-gradient(135deg, #10b981 0%, #22c55e 50%, #14b8a6 100%)',
-              color: 'white',
-              padding: '24px',
-              borderRadius: '16px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              textDecoration: 'none',
-              height: '100%',
-              minHeight: '140px',
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <motion.div
-              animate={{ x: [0, 15, -15, 0] }}
-              transition={{ repeat: Infinity, duration: 8 }}
-              style={{
-                position: 'absolute',
-                width: '96px',
-                height: '96px',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '50%',
-                top: '8px',
-                right: '8px',
-                filter: 'blur(20px)'
-              }}
-            />
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              position: 'relative',
-              zIndex: 10,
-              justifyContent: 'space-between'
-            }}>
-              <motion.div 
-                whileHover={{ rotate: 15 }}
-                style={{
-                  padding: '12px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '12px',
-                  backdropFilter: 'blur(10px)',
-                  width: 'fit-content'
-                }}
-              >
-                <ChatBubbleLeftIcon style={{ width: '24px', height: '24px', color: 'white' }} />
-              </motion.div>
-              <div>
-                <h3 style={{ fontWeight: '700', fontSize: '18px', marginBottom: '4px' }}>💬 AI Chat</h3>
-                <p style={{ fontSize: '14px', opacity: 0.9 }}>Talk with SoulSync</p>
-              </div>
-            </div>
-          </Link>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.65 }}
-          whileHover={{ y: -5, scale: 1.02 }}
-        >
-          <Link 
-            href="/screening" 
-            style={{
-              display: 'block',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
-              color: 'white',
-              padding: '24px',
-              borderRadius: '16px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              textDecoration: 'none',
-              height: '100%',
-              minHeight: '140px',
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <motion.div
-              animate={{ x: [0, -10, 10, 0] }}
-              transition={{ repeat: Infinity, duration: 10 }}
-              style={{
-                position: 'absolute',
-                width: '80px',
-                height: '80px',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '50%',
-                bottom: '8px',
-                right: '8px',
-                filter: 'blur(20px)'
-              }}
-            />
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              position: 'relative',
-              zIndex: 10,
-              justifyContent: 'space-between'
-            }}>
-              <motion.div 
-                whileHover={{ rotate: 15 }}
-                style={{
-                  padding: '12px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '12px',
-                  backdropFilter: 'blur(10px)',
-                  width: 'fit-content'
-                }}
-              >
-                <ClipboardDocumentCheckIcon style={{ width: '24px', height: '24px', color: 'white' }} />
-              </motion.div>
-              <div>
-                <h3 style={{ fontWeight: '700', fontSize: '18px', marginBottom: '4px' }}>📋 Screening</h3>
-                <p style={{ fontSize: '14px', opacity: 0.9 }}>Mental health assessments</p>
-              </div>
-            </div>
-          </Link>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          whileHover={{ y: -5, scale: 1.02 }}
-        >
-          <Link 
-            href="/resources" 
-            style={{
-              display: 'block',
-              background: 'linear-gradient(135deg, #f97316 0%, #f59e0b 50%, #eab308 100%)',
-              color: 'white',
-              padding: '24px',
-              borderRadius: '16px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              textDecoration: 'none',
-              height: '100%',
-              minHeight: '140px',
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <motion.div
-              animate={{ x: [0, 12, -12, 0] }}
-              transition={{ repeat: Infinity, duration: 9 }}
-              style={{
-                position: 'absolute',
-                width: '112px',
-                height: '112px',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '50%',
-                top: '4px',
-                left: '4px',
-                filter: 'blur(20px)'
-              }}
-            />
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              position: 'relative',
-              zIndex: 10,
-              justifyContent: 'space-between'
-            }}>
-              <motion.div 
-                whileHover={{ rotate: 15 }}
-                style={{
-                  padding: '12px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '12px',
-                  backdropFilter: 'blur(10px)',
-                  width: 'fit-content'
-                }}
-              >
-                <BookOpenIcon style={{ width: '24px', height: '24px', color: 'white' }} />
-              </motion.div>
-              <div>
-                <h3 style={{ fontWeight: '700', fontSize: '18px', marginBottom: '4px' }}>📚 Resources</h3>
-                <p style={{ fontSize: '14px', opacity: 0.9 }}>Youth mental wellness hub</p>
-              </div>
-            </div>
-          </Link>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.75 }}
-          whileHover={{ y: -5, scale: 1.02 }}
-        >
-          <Link 
-            href="/helplines" 
-            style={{
-              display: 'block',
-              background: 'linear-gradient(135deg, #ef4444 0%, #ec4899 50%, #f43f5e 100%)',
-              color: 'white',
-              padding: '24px',
-              borderRadius: '16px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              textDecoration: 'none',
-              height: '100%',
-              minHeight: '140px',
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <motion.div
-              animate={{ x: [0, 10, -10, 0] }}
-              transition={{ repeat: Infinity, duration: 7 }}
-              style={{
-                position: 'absolute',
-                width: '96px',
-                height: '96px',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '50%',
-                top: '8px',
-                right: '8px',
-                filter: 'blur(20px)'
-              }}
-            />
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              position: 'relative',
-              zIndex: 10,
-              justifyContent: 'space-between'
-            }}>
-              <motion.div 
-                whileHover={{ rotate: 15 }}
-                style={{
-                  padding: '12px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '12px',
-                  backdropFilter: 'blur(10px)',
-                  width: 'fit-content'
-                }}
-              >
-                <span style={{ fontSize: '24px' }}>📞</span>
-              </motion.div>
-              <div>
-                <h3 style={{ fontWeight: '700', fontSize: '18px', marginBottom: '4px' }}>📞 Helplines</h3>
-                <p style={{ fontSize: '14px', opacity: 0.9 }}>Crisis support & counseling</p>
-              </div>
-            </div>
-          </Link>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          whileHover={{ y: -5, scale: 1.02 }}
-        >
-          <Link 
-            href="/profile" 
-            style={{
-              display: 'block',
-              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%)',
-              color: 'white',
-              padding: '24px',
-              borderRadius: '16px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              textDecoration: 'none',
-              height: '100%',
-              minHeight: '140px',
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <motion.div
-              animate={{ x: [0, 8, -8, 0] }}
-              transition={{ repeat: Infinity, duration: 11 }}
-              style={{
-                position: 'absolute',
-                width: '128px',
-                height: '128px',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '50%',
-                bottom: '8px',
-                right: '8px',
-                filter: 'blur(20px)'
-              }}
-            />
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              position: 'relative',
-              zIndex: 10,
-              justifyContent: 'space-between'
-            }}>
-              <motion.div 
-                whileHover={{ rotate: 15 }}
-                style={{
-                  padding: '12px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '12px',
-                  backdropFilter: 'blur(10px)',
-                  width: 'fit-content'
-                }}
-              >
-                <UserIcon style={{ width: '24px', height: '24px', color: 'white' }} />
-              </motion.div>
-              <div>
-                <h3 style={{ fontWeight: '700', fontSize: '18px', marginBottom: '4px' }}>👤 Profile</h3>
-                <p style={{ fontSize: '14px', opacity: 0.9 }}>Manage settings</p>
-              </div>
-            </div>
-          </Link>
-        </motion.div>
-      </motion.div>
-
-      {/* Mental Health Features Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-          gap: '24px',
-          marginBottom: '32px',
-          alignItems: 'stretch'
-        }}
-      >
-        {/* Screening Section */}
-        <div style={{
-          background: 'linear-gradient(135deg, #faf5ff 0%, #eff6ff 50%, #eef2ff 100%)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '16px',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          padding: '24px',
-          border: '1px solid rgba(196, 181, 253, 0.2)',
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '320px'
-        }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginBottom: '16px'
-            }}>
-              <div style={{
-                padding: '12px',
-                backgroundColor: '#8b5cf6',
-                borderRadius: '12px',
-                marginRight: '16px'
-              }}>
-                <ClipboardDocumentCheckIcon style={{ width: '24px', height: '24px', color: 'white' }} />
-              </div>
-              <div>
-                <h3 style={{
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  color: '#1f2937',
-                  margin: 0
-                }}>Mental Health Screening</h3>
-                <p style={{
-                  fontSize: '14px',
-                  color: '#4b5563',
-                  margin: 0
-                }}>Take validated assessments</p>
-              </div>
-            </div>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              marginBottom: '16px',
-              flex: 1
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px',
-                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                borderRadius: '8px'
-              }}>
-                <div>
-                  <span style={{
-                    fontWeight: '500',
-                    color: '#1f2937'
-                  }}>PHQ-9</span>
-                  <p style={{
-                    fontSize: '12px',
-                    color: '#4b5563',
-                    margin: 0
-                  }}>Depression screening</p>
-                </div>
-                <span style={{
-                  fontSize: '12px',
-                  backgroundColor: '#dbeafe',
-                  color: '#1e40af',
-                  padding: '4px 8px',
-                  borderRadius: '20px'
-                }}>9 questions</span>
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px',
-                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                borderRadius: '8px'
-              }}>
-                <div>
-                  <span style={{
-                    fontWeight: '500',
-                    color: '#1f2937'
-                  }}>GAD-7</span>
-                  <p style={{
-                    fontSize: '12px',
-                    color: '#4b5563',
-                    margin: 0
-                  }}>Anxiety screening</p>
-                </div>
-                <span style={{
-                  fontSize: '12px',
-                  backgroundColor: '#dcfce7',
-                  color: '#166534',
-                  padding: '4px 8px',
-                  borderRadius: '20px'
-                }}>7 questions</span>
-              </div>
-            </div>
-          </div>
-          <Link href="/screening" style={{
-            display: 'block',
-            width: '100%',
-            backgroundColor: '#8b5cf6',
-            color: 'white',
-            textAlign: 'center',
-            padding: '12px',
-            borderRadius: '8px',
-            fontWeight: '500',
-            textDecoration: 'none',
-            transition: 'background-color 0.2s ease',
-            marginTop: 'auto'
-          }}>
-            Start Assessment
-          </Link>
-        </div>
-
-        {/* Resources Section */}
-        <div style={{
-          background: 'linear-gradient(135deg, #fffbf0 0%, #fef3c7 50%, #fef9c3 100%)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '16px',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          padding: '24px',
-          border: '1px solid rgba(251, 191, 36, 0.2)',
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '320px'
-        }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginBottom: '16px'
-            }}>
-              <div style={{
-                padding: '12px',
-                backgroundColor: '#f97316',
-                borderRadius: '12px',
-                marginRight: '16px'
-              }}>
-                <PlayIcon style={{ width: '24px', height: '24px', color: 'white' }} />
-              </div>
-              <div>
-                <h3 style={{
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  color: '#1f2937',
-                  margin: 0
-                }}>Wellness Resources</h3>
-                <p style={{
-                  fontSize: '14px',
-                  color: '#4b5563',
-                  margin: 0
-                }}>Videos, audio, and guides</p>
-              </div>
-            </div>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              marginBottom: '16px',
-              flex: 1
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px',
-                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                borderRadius: '8px'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ marginRight: '8px' }}>🎥</span>
-                  <span style={{
-                    fontWeight: '500',
-                    color: '#1f2937'
-                  }}>Mental Health Videos</span>
-                </div>
-                <span style={{
-                  fontSize: '12px',
-                  backgroundColor: '#fed7aa',
-                  color: '#9a3412',
-                  padding: '4px 8px',
-                  borderRadius: '20px'
-                }}>Regional</span>
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px',
-                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                borderRadius: '8px'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ marginRight: '8px' }}>🎧</span>
-                  <span style={{
-                    fontWeight: '500',
-                    color: '#1f2937'
-                  }}>Guided Meditations</span>
-                </div>
-                <span style={{
-                  fontSize: '12px',
-                  backgroundColor: '#dcfce7',
-                  color: '#166534',
-                  padding: '4px 8px',
-                  borderRadius: '20px'
-                }}>Audio</span>
-              </div>
-            </div>
-          </div>
-          <Link href="/resources" style={{
-            display: 'block',
-            width: '100%',
-            backgroundColor: '#ea580c',
-            color: 'white',
-            textAlign: 'center',
-            padding: '12px',
-            borderRadius: '8px',
-            fontWeight: '500',
-            textDecoration: 'none',
-            transition: 'background-color 0.2s ease',
-            marginTop: 'auto'
-          }}>
-            Explore Resources
-          </Link>
-        </div>
-      </motion.div>
-
-      {/* Recent Activity */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.9 }}
-        style={{
-          background: 'linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #faf5ff 100%)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '16px',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          padding: '32px',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        <motion.div
-          animate={{ x: [0, 25, -25, 0], y: [0, 15, -15, 0] }}
-          transition={{ repeat: Infinity, duration: 15 }}
-          style={{
-            position: 'absolute',
-            width: '160px',
-            height: '160px',
-            background: 'linear-gradient(135deg, #bfdbfe 0%, #ddd6fe 100%)',
-            opacity: 0.2,
-            borderRadius: '50%',
-            top: '16px',
-            right: '16px',
-            filter: 'blur(40px)'
-          }}
-        />
-        
-        <h2 style={{
-          fontSize: '30px',
-          fontWeight: '700',
-          marginBottom: '32px',
-          color: '#1f2937',
-          position: 'relative',
-          zIndex: 10
-        }}>Your Wellness Journey</h2>
+        width: '320px',
+        backgroundColor: 'white',
+        padding: '32px 24px',
+        borderRight: '1px solid #e9ecef',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {/* Expert Consultation Card */}
         <div style={{
           textAlign: 'center',
-          padding: '48px 0',
-          position: 'relative',
-          zIndex: 10
+          marginBottom: '32px'
         }}>
-          <motion.div 
-            whileHover={{ scale: 1.1, rotate: 180 }}
-            transition={{ duration: 0.3 }}
+          <div style={{
+            width: '80px',
+            height: '80px',
+            backgroundColor: '#fff3cd',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 16px',
+            border: '2px solid #ffc107'
+          }}>
+            <UserIcon style={{ width: '32px', height: '32px', color: '#856404' }} />
+          </div>
+          <p style={{
+            color: '#6c757d',
+            fontSize: '14px',
+            lineHeight: '1.5',
+            marginBottom: '20px'
+          }}>
+            Get a dedicated voice / video session with an expert for a more focused experience
+          </p>
+          <Link 
+            href="/book-demo"
             style={{
-              margin: '0 auto',
-              width: '96px',
-              height: '96px',
-              background: 'linear-gradient(135deg, #bfdbfe 0%, #ddd6fe 50%, #fce7f3 100%)',
+              display: 'inline-block',
+              backgroundColor: '#007bff',
+              color: 'white',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            BOOK AN APPOINTMENT
+          </Link>
+        </div>
+        
+        {/* Quick Actions */}
+        <div style={{ flex: 1 }}>
+          <h3 style={{
+            fontSize: '16px',
+            fontWeight: '600',
+            color: '#212529',
+            marginBottom: '16px'
+          }}>
+            Quick Actions
+          </h3>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Link 
+              href="/prompt"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '12px 16px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                color: '#212529',
+                border: '1px solid #e9ecef',
+                transition: 'all 0.2s'
+              }}
+            >
+              <ChatBubbleLeftIcon style={{ width: '20px', height: '20px', marginRight: '12px', color: '#28a745' }} />
+              <span style={{ fontSize: '14px', fontWeight: '500' }}>AI Chat</span>
+            </Link>
+            
+            <Link 
+              href="/screening"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '12px 16px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                color: '#212529',
+                border: '1px solid #e9ecef',
+                transition: 'all 0.2s'
+              }}
+            >
+              <ClipboardDocumentCheckIcon style={{ width: '20px', height: '20px', marginRight: '12px', color: '#007bff' }} />
+              <span style={{ fontSize: '14px', fontWeight: '500' }}>Screening</span>
+            </Link>
+            
+            <Link 
+              href="/resources"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '12px 16px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                color: '#212529',
+                border: '1px solid #e9ecef',
+                transition: 'all 0.2s'
+              }}
+            >
+              <BookOpenIcon style={{ width: '20px', height: '20px', marginRight: '12px', color: '#fd7e14' }} />
+              <span style={{ fontSize: '14px', fontWeight: '500' }}>Resources</span>
+            </Link>
+            
+            <Link 
+              href="/helplines"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '12px 16px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                color: '#212529',
+                border: '1px solid #e9ecef',
+                transition: 'all 0.2s'
+              }}
+            >
+              <span style={{ fontSize: '16px', marginRight: '12px' }}>📞</span>
+              <span style={{ fontSize: '14px', fontWeight: '500' }}>Helplines</span>
+            </Link>
+            
+            <Link 
+              href="/profile"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '12px 16px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                color: '#212529',
+                border: '1px solid #e9ecef',
+                transition: 'all 0.2s'
+              }}
+            >
+              <UserIcon style={{ width: '20px', height: '20px', marginRight: '12px', color: '#6f42c1' }} />
+              <span style={{ fontSize: '14px', fontWeight: '500' }}>Profile</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div style={{
+        flex: 1,
+        padding: '32px 40px',
+        maxWidth: 'calc(100vw - 320px)',
+        overflow: 'auto'
+      }}>
+        {/* Welcome Section */}
+        <div style={{ marginBottom: '32px' }}>
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: '600',
+            color: '#212529',
+            marginBottom: '8px'
+          }}>
+            My Mental Wellness Hub
+          </h1>
+          <p style={{
+            color: '#6c757d',
+            fontSize: '16px',
+            marginBottom: '0'
+          }}>
+            Hello, {anonymousName} • {institution}
+          </p>
+        </div>
+
+        {/* My Experts Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '32px',
+          marginBottom: '32px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #e9ecef'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '24px'
+          }}>
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#495057',
+              margin: 0
+            }}>
+              My Experts
+            </h2>
+            <button style={{
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderRadius: '6px',
+              padding: '8px 16px',
+              fontSize: '14px',
+              color: '#495057',
+              cursor: 'pointer'
+            }}>
+              Explore Experts
+            </button>
+          </div>
+          
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            marginBottom: '16px'
+          }}>
+            <div style={{ display: 'flex', marginRight: '16px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: '#e9ecef',
+                backgroundImage: 'url(data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%236c757d"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>)',
+                backgroundSize: '20px',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                marginRight: '-8px',
+                border: '2px solid white'
+              }}></div>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: '#ffc107',
+                backgroundImage: 'url(data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>)',
+                backgroundSize: '20px',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                marginRight: '-8px',
+                border: '2px solid white'
+              }}></div>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: '#28a745',
+                backgroundImage: 'url(data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>)',
+                backgroundSize: '20px',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                border: '2px solid white'
+              }}></div>
+            </div>
+            <div>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: '#495057',
+                margin: '0 0 4px 0'
+              }}>
+                Begin your first session...
+              </h3>
+              <p style={{
+                fontSize: '14px',
+                color: '#6c757d',
+                margin: 0
+              }}>
+                Chat right now with an expert on any topic you are seeking answers for.
+              </p>
+            </div>
+          </div>
+          
+          <p style={{
+            fontSize: '14px',
+            color: '#6c757d',
+            margin: 0
+          }}>
+            23 people are taking sessions
+          </p>
+        </div>
+
+        {/* Mood Tracking Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '32px',
+          marginBottom: '32px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #e9ecef'
+        }}>
+          <h2 style={{
+            fontSize: '20px',
+            fontWeight: '600',
+            color: '#495057',
+            textAlign: 'center',
+            marginBottom: '24px'
+          }}>
+            How are you feeling today?
+          </h2>
+          
+          {/* Selected mood feedback */}
+          {selectedMood && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                marginBottom: '24px',
+                padding: '16px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                border: '2px solid #e9ecef',
+                textAlign: 'center'
+              }}
+            >
+              <div style={{ fontSize: '24px', marginBottom: '8px' }}>
+                {selectedMood.emoji}
+              </div>
+              <p style={{ 
+                margin: 0, 
+                color: '#666', 
+                fontSize: '16px'
+              }}>
+                You're feeling <strong style={{ color: selectedMood.color }}>{selectedMood.label}</strong>
+              </p>
+              <p style={{
+                margin: '8px 0 0 0',
+                fontSize: '14px',
+                color: '#888'
+              }}>
+                This will help our AI provide better support in chat
+              </p>
+            </motion.div>
+          )}
+          
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '24px',
+            flexWrap: 'wrap'
+          }}>
+            {moods.map((mood) => (
+              <motion.div
+                key={mood.id}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  transition: 'all 0.2s',
+                  minWidth: '100px'
+                }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleMoodSelect(mood)}
+              >
+                <motion.div 
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    backgroundColor: selectedMood?.id === mood.id 
+                      ? `${mood.color}40` 
+                      : mood.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '28px',
+                    marginBottom: '8px',
+                    border: selectedMood?.id === mood.id 
+                      ? `3px solid ${mood.color}` 
+                      : '3px solid white',
+                    boxShadow: selectedMood?.id === mood.id 
+                      ? `0 4px 12px ${mood.color}60`
+                      : '0 2px 8px rgba(0, 0, 0, 0.1)'
+                  }}
+                  animate={selectedMood?.id === mood.id && showMoodAnimation ? {
+                    scale: [1, 1.3, 1],
+                    rotate: [0, 15, -15, 0]
+                  } : {}}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                >
+                  {mood.emoji}
+                </motion.div>
+                <span style={{
+                  fontSize: '14px',
+                  color: selectedMood?.id === mood.id ? mood.color : '#495057',
+                  fontWeight: selectedMood?.id === mood.id ? '600' : '500'
+                }}>
+                  {mood.label}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Self Test Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '32px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #e9ecef'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
               borderRadius: '50%',
+              backgroundColor: '#ffc107',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: '24px',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+              fontSize: '24px'
+            }}>
+              📋
+            </div>
+            <div>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#495057',
+                margin: '0 0 4px 0'
+              }}>
+                SELF TEST
+              </h3>
+              <p style={{
+                fontSize: '14px',
+                color: '#6c757d',
+                margin: 0
+              }}>
+                Take a quick mental health assessment
+              </p>
+            </div>
+            <button style={{
+              marginLeft: 'auto',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer'
             }}
-          >
-            <PlusIcon style={{ width: '48px', height: '48px', color: '#4b5563' }} />
-          </motion.div>
-          <motion.h3 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.1 }}
-            style={{
-              fontSize: '24px',
-              fontWeight: '600',
-              color: '#1f2937',
-              marginBottom: '16px'
-            }}
-          >
-            Start Your Wellness Journey
-          </motion.h3>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
-            style={{
-              color: '#4b5563',
-              marginBottom: '32px',
-              maxWidth: '512px',
-              margin: '0 auto 32px',
-              lineHeight: '1.6'
-            }}
-          >
-            Begin by chatting with our AI companion and building healthy mental wellness habits.
-          </motion.p>
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.3 }}
-            style={{
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link 
-                href="/prompt" 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '12px',
-                  padding: '16px 32px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)',
-                  color: 'white',
-                  borderRadius: '12px',
-                  textDecoration: 'none',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                  fontWeight: '500',
-                  height: '56px',
-                  minWidth: '200px'
-                }}
-              >
-                <ChatBubbleLeftIcon style={{ width: '20px', height: '20px' }} />
-                <span>Start Chatting</span>
-              </Link>
-            </motion.div>
-          </motion.div>
+            onClick={() => router.push('/screening')}
+            >
+              Start Test
+            </button>
+          </div>
         </div>
-      </motion.div>
-
-      {/* Global floating elements */}
-      <motion.div
-        animate={{ x: [0, 30, -30, 0], y: [0, 20, -20, 0] }}
-        transition={{ repeat: Infinity, duration: 15 }}
-        style={{
-          position: 'fixed',
-          width: '384px',
-          height: '384px',
-          backgroundColor: '#bfdbfe',
-          opacity: 0.05,
-          borderRadius: '50%',
-          top: '40px',
-          right: '40px',
-          filter: 'blur(60px)',
-          zIndex: -50
-        }}
-      />
-      <motion.div
-        animate={{ x: [0, -25, 25, 0], y: [0, -15, 15, 0] }}
-        transition={{ repeat: Infinity, duration: 18 }}
-        style={{
-          position: 'fixed',
-          width: '320px',
-          height: '320px',
-          backgroundColor: '#ddd6fe',
-          opacity: 0.05,
-          borderRadius: '50%',
-          bottom: '40px',
-          left: '40px',
-          filter: 'blur(60px)',
-          zIndex: -50
-        }}
-      />
+      </div>
     </div>
   );
 }

@@ -1,10 +1,11 @@
-"use client";
+﻿"use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "../../hooks/useLocation";
-import VoiceInput from "../../components/VoiceInput";
 import { useAuth } from "../../contexts/AuthContext";
 import { aiService } from "../../lib/aiService";
+import { MicrophoneIcon, PaperAirplaneIcon, StopIcon } from "@heroicons/react/24/outline";
 
 export default function PromptPage() {
   const { user } = useAuth();
@@ -15,453 +16,588 @@ export default function PromptPage() {
     timestamp: Date;
     language?: string;
   }>>([]);
-  const [popup, setPopup] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const messageIdRef = useRef(0);
-  
-  const { location, detectLocation } = useLocation();
+  const [inputText, setInputText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('hi-IN');
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const recognition = useRef<any>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { location: userLocation } = useLocation();
 
-  const handleVoiceTranscript = async (transcript: string, language: string = 'en-US') => {
-    // Add user message to chat
-    const userMessage = {
-      id: `user-${++messageIdRef.current}`,
-      type: 'user' as const,
-      content: transcript,
-      timestamp: new Date(),
-      language: language
-    };
-    setMessages(prev => [...prev, userMessage]);
-    
-    setLoading(true);
-    setError("");
-    setPopup(null);
+  const supportedLanguages = [
+    { code: 'hi-IN', name: 'Hindi' },
+    { code: 'bn-IN', name: 'Bengali' },
+    { code: 'te-IN', name: 'Telugu' },
+    { code: 'mr-IN', name: 'Marathi' },
+    { code: 'ta-IN', name: 'Tamil' },
+    { code: 'ur-IN', name: 'Urdu' },
+    { code: 'gu-IN', name: 'Gujarati' },
+    { code: 'kn-IN', name: 'Kannada' },
+    { code: 'ml-IN', name: 'Malayalam' },
+    { code: 'pa-IN', name: 'Punjabi' },
+    { code: 'or-IN', name: 'Odia' },
+    { code: 'as-IN', name: 'Assamese' },
+    { code: 'en-US', name: 'English' },
+    { code: 'es-ES', name: 'Spanish' },
+    { code: 'fr-FR', name: 'French' },
+    { code: 'de-DE', name: 'German' },
+    { code: 'it-IT', name: 'Italian' },
+    { code: 'pt-PT', name: 'Portuguese' },
+    { code: 'ru-RU', name: 'Russian' },
+    { code: 'ja-JP', name: 'Japanese' },
+    { code: 'ko-KR', name: 'Korean' },
+    { code: 'zh-CN', name: 'Chinese' },
+    { code: 'ar-SA', name: 'Arabic' }
+  ];
 
-    try {
-      const guestMode = !user;
-      
-      // Build context object for AI service
-      const context = {
-        location: location ? {
-          country: location.country,
-          state: location.state,
-          city: location.city
-        } : undefined,
-        language: language,
-        guestMode: guestMode
+  const initializeSpeechRecognition = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      recognition.current = new SpeechRecognition();
+      recognition.current.continuous = true;
+      recognition.current.interimResults = true;
+      recognition.current.lang = selectedLanguage;
+
+      recognition.current.onresult = (event: any) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        if (finalTranscript) {
+          setInputText(prev => prev + finalTranscript + ' ');
+        }
       };
 
-      // Use AI service for intelligent responses
-      const data = await aiService.generateResponse(transcript, context);
+      recognition.current.onend = () => {
+        setIsRecording(false);
+      };
 
-      if (data.action === "popup") {
-        setPopup(data);
-      } else {
-        // Add AI response to chat
-        const aiMessage = {
-          id: `ai-${++messageIdRef.current}`,
-          type: 'ai' as const,
-          content: data.message,
-          timestamp: new Date(),
-          language: language
-        };
-        setMessages(prev => [...prev, aiMessage]);
-      }
-    } catch (err) {
-      setError("Failed to generate AI response.");
+      recognition.current.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setIsRecording(false);
+      };
+    }
+  };
+
+  useEffect(() => {
+    initializeSpeechRecognition();
+  }, [selectedLanguage]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleSubmit = async () => {
+    if (!inputText.trim() || isLoading) return;
+
+    const userMessage = {
+      id: Date.now().toString(),
+      type: 'user' as const,
+      content: inputText.trim(),
+      timestamp: new Date(),
+      language: selectedLanguage
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputText("");
+    setIsLoading(true);
+
+    try {
+      const userContext = {
+        location: userLocation,
+        language: selectedLanguage
+      };
+      
+      const response = await aiService.generateResponse(
+        inputText.trim(), 
+        userContext
+      );
+      
+      const aiMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: response.message, // Extract message from AIResponse
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+      const errorMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: 'I apologize, but I encountered an error. Please try again.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  const toggleRecording = () => {
+    if (!recognition.current) return;
+
+    if (isRecording) {
+      recognition.current.stop();
+      setIsRecording(false);
+    } else {
+      recognition.current.lang = selectedLanguage;
+      recognition.current.start();
+      setIsRecording(true);
     }
   };
 
   return (
     <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#f8f9fa',
-      fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-      margin: 0,
-      padding: 0
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #0f3460 0%, #16213e 50%, #1a1a2e 100%)",
+      color: "white",
+      fontFamily: "system-ui, -apple-system, sans-serif"
     }}>
-      {/* Hero Section */}
-      <section style={{
-        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-        color: 'white',
-        padding: '60px 20px',
-        textAlign: 'center'
+      {/* Header */}
+      <div style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
+        background: "rgba(26, 26, 46, 0.9)",
+        backdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.1)"
       }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <h1 style={{ 
-            margin: 0, 
-            fontSize: '36px', 
-            fontWeight: '700',
-            marginBottom: '16px',
-            letterSpacing: '-0.5px'
-          }}>Hi Buddy... Share what's in your mind</h1>
-          <p style={{ 
-            fontSize: '18px', 
-            opacity: 0.9,
-            fontWeight: '300',
-            lineHeight: '1.5'
-          }}>
-            Your AI companion is here to listen and support you 24/7
-          </p>
-
-          {/* Location Context Indicator */}
-          {location && (
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              padding: '8px 16px',
-              borderRadius: '20px',
-              marginTop: '16px',
-              fontSize: '14px',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.3)'
+        <div style={{
+          maxWidth: "800px",
+          margin: "0 auto",
+          padding: "16px 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between"
+        }}>
+          <div>
+            <h1 style={{
+              fontSize: "24px",
+              fontWeight: "bold",
+              margin: 0,
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text"
             }}>
-              <span style={{ marginRight: '8px' }}>📍</span>
-              Providing support for {location.city}, {location.state}
+              AI Mental Health Support
+            </h1>
+            <p style={{
+              margin: "4px 0 0 0",
+              fontSize: "14px",
+              color: "rgba(255, 255, 255, 0.6)"
+            }}>
+              Your compassionate AI companion for mental wellness
+            </p>
+          </div>
+          {user && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}>
+              <div style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "14px",
+                fontWeight: "bold"
+              }}>
+                {user.email?.charAt(0).toUpperCase()}
+              </div>
             </div>
           )}
         </div>
-      </section>
+      </div>
 
-      {/* Main Chat Container */}
-      <main style={{ 
-        maxWidth: '1000px', 
-        margin: '-30px auto 0',
-        padding: '0 20px',
-        position: 'relative'
+      {/* Chat Messages */}
+      <div style={{
+        maxWidth: "800px",
+        margin: "0 auto",
+        padding: "20px",
+        minHeight: "calc(100vh - 200px)",
+        paddingBottom: "120px"
       }}>
-        {/* Chat Messages */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '20px',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-          minHeight: '500px',
-          marginBottom: '30px',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {/* Chat Header */}
-          <div style={{
-            padding: '24px 32px',
-            borderBottom: '1px solid #e2e8f0',
-            backgroundColor: '#f7fafc',
-            borderRadius: '20px 20px 0 0'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
+        <AnimatePresence>
+          {messages.map((message) => (
+            <motion.div
+              key={message.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              style={{
+                display: "flex",
+                justifyContent: message.type === 'user' ? "flex-end" : "flex-start",
+                marginBottom: "16px"
+              }}
+            >
               <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
+                maxWidth: "70%",
+                padding: "12px 16px",
+                borderRadius: message.type === 'user' ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                background: message.type === 'user' 
+                  ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                  : "rgba(255, 255, 255, 0.1)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)"
               }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '18px'
+                <p style={{
+                  margin: 0,
+                  fontSize: "15px",
+                  lineHeight: "1.5",
+                  color: message.type === 'user' ? "white" : "rgba(255, 255, 255, 0.9)"
                 }}>
-                  🤖
-                </div>
-                <div>
-                  <h3 style={{ 
-                    margin: 0, 
-                    fontSize: '16px', 
-                    fontWeight: '600',
-                    color: '#1a202c'
-                  }}>
-                    SoulSync AI Assistant
-                  </h3>
-                  <p style={{ 
-                    margin: 0, 
-                    fontSize: '12px', 
-                    color: '#718096'
-                  }}>
-                    Online • Ready to help
-                  </p>
+                  {message.content}
+                </p>
+                <div style={{
+                  fontSize: "12px",
+                  color: message.type === 'user' 
+                    ? "rgba(255, 255, 255, 0.7)" 
+                    : "rgba(255, 255, 255, 0.5)",
+                  marginTop: "4px",
+                  textAlign: "right"
+                }}>
+                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {message.language && (
+                    <span style={{ marginLeft: "8px" }}>
+                      {supportedLanguages.find(lang => lang.code === message.language)?.name}
+                    </span>
+                  )}
                 </div>
               </div>
-              
-              {!location && (
-                <button
-                  onClick={detectLocation}
-                  style={{
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
-                >
-                  📍 Detect Location
-                </button>
-              )}
-            </div>
-          </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
-          {/* Messages Area */}
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              display: "flex",
+              justifyContent: "flex-start",
+              marginBottom: "16px"
+            }}
+          >
+            <div style={{
+              maxWidth: "70%",
+              padding: "12px 16px",
+              borderRadius: "18px 18px 18px 4px",
+              background: "rgba(255, 255, 255, 0.1)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(255, 255, 255, 0.6)",
+                  animation: "pulse 1.5s ease-in-out infinite"
+                }}></div>
+                <div style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(255, 255, 255, 0.6)",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                  animationDelay: "0.2s"
+                }}></div>
+                <div style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(255, 255, 255, 0.6)",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                  animationDelay: "0.4s"
+                }}></div>
+              </div>
+              <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.7)" }}>
+                AI is thinking...
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Input Area */}
+      <div style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: "linear-gradient(180deg, rgba(15, 52, 96, 0) 0%, rgba(15, 52, 96, 0.95) 100%)",
+        backdropFilter: "blur(20px)",
+        padding: "20px",
+        borderTop: "1px solid rgba(255, 255, 255, 0.1)"
+      }}>
+        <div style={{
+          maxWidth: "800px",
+          margin: "0 auto",
+          display: "flex",
+          gap: "12px",
+          alignItems: "flex-end"
+        }}>
           <div style={{
             flex: 1,
-            padding: '32px',
-            maxHeight: '400px',
-            overflowY: 'auto',
-            minHeight: '300px'
+            position: "relative"
           }}>
-            {messages.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '40px 20px',
-                color: '#718096'
-              }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  borderRadius: '20px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '32px',
-                  marginBottom: '20px'
-                }}>
-                  💭
-                </div>
-                <h4 style={{ 
-                  fontSize: '18px', 
-                  fontWeight: '600',
-                  color: '#2d3748',
-                  marginBottom: '8px'
-                }}>
-                  Start Your Conversation
-                </h4>
-                <p style={{ 
-                  fontSize: '14px',
-                  lineHeight: '1.6'
-                }}>
-                  Share what's on your mind. I'm here to listen and provide support.
-                </p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: message.type === 'user' ? 'flex-end' : 'flex-start'
-                    }}
-                  >
-                    <div style={{
-                      maxWidth: '80%',
-                      padding: '16px 20px',
-                      borderRadius: message.type === 'user' ? '20px 20px 8px 20px' : '20px 20px 20px 8px',
-                      backgroundColor: message.type === 'user' ? '#10b981' : '#f7fafc',
-                      color: message.type === 'user' ? 'white' : '#2d3748',
-                      fontSize: '14px',
-                      lineHeight: '1.5',
-                      border: message.type === 'ai' ? '1px solid #e2e8f0' : 'none'
-                    }}>
-                      {message.content}
-                      <div style={{
-                        marginTop: '8px',
-                        fontSize: '11px',
-                        opacity: 0.7
-                      }}>
-                        {message.timestamp.toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Send message..."
+              style={{
+                width: "100%",
+                minHeight: "50px",
+                maxHeight: "100px",
+                padding: "14px 90px 14px 16px",
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderRadius: "25px",
+                color: "white",
+                fontSize: "16px",
+                fontFamily: "inherit",
+                resize: "none",
+                outline: "none",
+                background: "transparent"
+              }}
+            />
+            
+            {/* Right-side buttons container */}
+            <div style={{
+              position: "absolute",
+              right: "8px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
+            }}>
+              {/* Language Selector */}
+              <div style={{ position: "relative" }}>
+                <button
+                  onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    borderRadius: "8px",
+                    color: "white",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    backdropFilter: "blur(10px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s ease",
+                    boxShadow: showLanguageDropdown ? "0 4px 20px rgba(102, 126, 234, 0.4)" : "none"
+                  }}
+                >
+                  {selectedLanguage.startsWith('hi') ? '🇮🇳' : 
+                   selectedLanguage.startsWith('en') ? '🇺🇸' :
+                   selectedLanguage.startsWith('es') ? '🇪🇸' :
+                   selectedLanguage.startsWith('fr') ? '🇫🇷' :
+                   selectedLanguage.startsWith('de') ? '🇩🇪' : '🌐'}
+                </button>
                 
-                {loading && (
+                {showLanguageDropdown && (
                   <div style={{
-                    display: 'flex',
-                    justifyContent: 'flex-start'
+                    position: "absolute",
+                    bottom: "100%",
+                    right: 0,
+                    marginBottom: "8px",
+                    backgroundColor: "rgba(26, 26, 46, 0.95)",
+                    backdropFilter: "blur(20px)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    borderRadius: "12px",
+                    padding: "8px 0",
+                    minWidth: "200px",
+                    maxHeight: "250px",
+                    overflowY: "auto",
+                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+                    zIndex: 1000
                   }}>
-                    <div style={{
-                      padding: '16px 20px',
-                      borderRadius: '20px 20px 20px 8px',
-                      backgroundColor: '#f7fafc',
-                      border: '1px solid #e2e8f0',
-                      fontSize: '14px',
-                      color: '#718096'
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <div style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: '#10b981',
-                          animation: 'pulse 1.5s infinite'
-                        }}></div>
-                        AI is typing...
+                    {supportedLanguages.map((language, index) => (
+                      <div key={language.code}>
+                        {index === 12 && (
+                          <div style={{
+                            padding: "8px 16px",
+                            fontSize: "11px",
+                            color: "rgba(255, 255, 255, 0.5)",
+                            borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+                            marginTop: "4px",
+                            paddingTop: "8px"
+                          }}>
+                            International Languages
+                          </div>
+                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedLanguage(language.code);
+                            setShowLanguageDropdown(false);
+                          }}
+                          style={{
+                            width: "100%",
+                            textAlign: "left",
+                            padding: "8px 16px",
+                            backgroundColor: selectedLanguage === language.code 
+                              ? "rgba(102, 126, 234, 0.3)" 
+                              : "transparent",
+                            border: "none",
+                            color: "white",
+                            fontSize: "13px",
+                            cursor: "pointer",
+                            transition: "background-color 0.2s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px"
+                          }}
+                          onMouseEnter={(e) => {
+                            if (selectedLanguage !== language.code) {
+                              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (selectedLanguage !== language.code) {
+                              e.currentTarget.style.backgroundColor = "transparent";
+                            }
+                          }}
+                        >
+                          {index < 12 ? "🇮🇳" : "🌐"} {language.name}
+                        </button>
                       </div>
-                    </div>
+                    ))}
                   </div>
                 )}
               </div>
-            )}
+
+              {/* Voice Button */}
+              <button
+                onClick={toggleRecording}
+                disabled={!recognition.current}
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  backgroundColor: isRecording 
+                    ? "rgba(239, 68, 68, 0.2)" 
+                    : "rgba(255, 255, 255, 0.1)",
+                  border: isRecording 
+                    ? "1px solid rgba(239, 68, 68, 0.5)" 
+                    : "1px solid rgba(255, 255, 255, 0.2)",
+                  borderRadius: "50%",
+                  color: isRecording ? "#ef4444" : "white",
+                  cursor: recognition.current ? "pointer" : "not-allowed",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s ease",
+                  backdropFilter: "blur(10px)",
+                  opacity: recognition.current ? 1 : 0.5,
+                  boxShadow: isRecording ? "0 4px 20px rgba(239, 68, 68, 0.4)" : "none"
+                }}
+              >
+                {isRecording ? (
+                  <StopIcon style={{ width: "16px", height: "16px" }} />
+                ) : (
+                  <MicrophoneIcon style={{ width: "16px", height: "16px" }} />
+                )}
+              </button>
+            </div>
           </div>
 
-          {/* Voice Input Area */}
-          <div style={{
-            padding: '24px 32px',
-            borderTop: '1px solid #e2e8f0',
-            backgroundColor: '#fafafa',
-            borderRadius: '0 0 20px 20px'
-          }}>
-            <VoiceInput onTranscript={handleVoiceTranscript} />
-            
-            {error && (
-              <div style={{
-                marginTop: '12px',
-                padding: '12px',
-                backgroundColor: '#fed7d7',
-                color: '#c53030',
-                borderRadius: '8px',
-                fontSize: '14px',
-                textAlign: 'center'
-              }}>
-                {error}
-              </div>
-            )}
-          </div>
+          {/* Send Button */}
+          <button
+            onClick={handleSubmit}
+            disabled={!inputText.trim() || isLoading}
+            style={{
+              width: "50px",
+              height: "50px",
+              backgroundColor: inputText.trim() && !isLoading 
+                ? "linear-gradient(135deg, #ff8a50 0%, #ff6b35 50%, #e74c3c 100%)" 
+                : "rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              borderRadius: "50%",
+              color: "white",
+              cursor: inputText.trim() && !isLoading ? "pointer" : "not-allowed",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.3s ease",
+              backdropFilter: "blur(10px)",
+              opacity: inputText.trim() && !isLoading ? 1 : 0.5,
+              boxShadow: inputText.trim() && !isLoading 
+                ? "0 6px 25px rgba(255, 138, 80, 0.5), 0 2px 10px rgba(255, 107, 53, 0.3)" 
+                : "none",
+              transform: inputText.trim() && !isLoading ? "scale(1.02)" : "scale(1)"
+            }}
+            onMouseEnter={(e) => {
+              if (inputText.trim() && !isLoading) {
+                e.currentTarget.style.transform = "scale(1.08)";
+                e.currentTarget.style.boxShadow = "0 8px 30px rgba(255, 138, 80, 0.6), 0 4px 15px rgba(255, 107, 53, 0.4)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (inputText.trim() && !isLoading) {
+                e.currentTarget.style.transform = "scale(1.02)";
+                e.currentTarget.style.boxShadow = "0 6px 25px rgba(255, 138, 80, 0.5), 0 2px 10px rgba(255, 107, 53, 0.3)";
+              }
+            }}
+          >
+            <PaperAirplaneIcon style={{ 
+              width: "18px", 
+              height: "18px",
+              transform: "rotate(315deg) translateX(1px)",
+              filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))"
+            }} />
+          </button>
         </div>
+      </div>
 
-        {/* Emergency Support Card */}
-        <div style={{
-          backgroundColor: '#fee2e2',
-          border: '1px solid #fecaca',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '40px',
-          textAlign: 'center'
-        }}>
-          <h4 style={{
-            color: '#dc2626',
-            fontSize: '16px',
-            fontWeight: '600',
-            marginBottom: '8px'
-          }}>
-            🚨 Need Immediate Help?
-          </h4>
-          <p style={{
-            color: '#991b1b',
-            fontSize: '14px',
-            marginBottom: '12px'
-          }}>
-            If you're experiencing a mental health emergency, please reach out to professionals immediately.
-          </p>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '12px',
-            flexWrap: 'wrap'
-          }}>
-            <a
-              href="tel:988"
-              style={{
-                backgroundColor: '#dc2626',
-                color: 'white',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontSize: '12px',
-                fontWeight: '500'
-              }}
-            >
-              Crisis Hotline: 988
-            </a>
-            <a
-              href="tel:911"
-              style={{
-                backgroundColor: '#7c2d12',
-                color: 'white',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontSize: '12px',
-                fontWeight: '500'
-              }}
-            >
-              Emergency: 911
-            </a>
-          </div>
-        </div>
-      </main>
+      <div ref={messagesEndRef} />
 
-      {/* Popup Modal */}
-      {popup && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            maxWidth: '500px',
-            width: '100%',
-            textAlign: 'center',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-          }}>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#1a202c',
-              marginBottom: '16px'
-            }}>
-              {popup.title}
-            </h3>
-            <p style={{
-              color: '#4a5568',
-              marginBottom: '24px',
-              lineHeight: '1.6'
-            }}>
-              {popup.message}
-            </p>
-            <button
-              onClick={() => setPopup(null)}
-              style={{
-                backgroundColor: '#10b981',
-                color: 'white',
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 70%, 100% {
+            transform: scale(1);
+            opacity: 0.6;
+          }
+          35% {
+            transform: scale(1.2);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
